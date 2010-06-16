@@ -13,6 +13,13 @@ object Util
 {
   def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
+  def remap(x:Float, min:Float, max:Float):Float = 
+  {
+    if(max - min != 0.f)
+      (x - min) /  (max - min)
+    else
+      (x - min)
+  }
 }
 /* ------------------------------------------------------------
  !GL

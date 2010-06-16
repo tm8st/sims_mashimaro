@@ -12,7 +12,7 @@ import util.tm8st._
  ------------------------------------------------------------ */
 trait GameObject
 {
-  var name:String = "empty"
+  var name:String = "GameObject"
   
   private var bDestroy:Boolean = false
 
@@ -135,6 +135,7 @@ class CBoxPrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimitive
   override def draw()
   {
     super.draw()
+
     GL.rect(pos.X-bounds.boxExtent.X, pos.Y-bounds.boxExtent.Y, bounds.boxExtent.X * 2.f, bounds.boxExtent.Y * 2.f)
   }
 }
@@ -155,11 +156,8 @@ class CSpherePrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimiti
  !ラベルプリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CLabelPrimitive(val caption:String, translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CLabelPrimitive(var caption:String, translation:Vector3, bounds:Bounds) extends CShapePrimitive
 {
-  // var caption = "nothing"
-  // var caption = "nothing"
-
   isFillShape = true
 
   // 
@@ -180,11 +178,13 @@ trait GameActor extends GameObject with Movable
   val world:World
   var primitives:Primitives = List()
 
+  // 
   def addPrimitive(p:CPrimitive)
   {
     p.owner = this
     primitives = p::primitives
   }
+  // 
   def removePrimitive(p:CPrimitive)
   {
     p.owner = null
@@ -206,15 +206,6 @@ trait GameActor extends GameObject with Movable
     primitives.map(_.tick(delta))
     primitives.filter(_.needsDrawableRegister()).map(world.addDrawable(_))
   }
-  
-  // 
-  def debugDraw():Float = 
-  {
-    GL.stroke(Color(255, 0, 0, 0));
-    GL.fill(new Color(0))
-
-    0.f
-  }
 }
 
 /* ------------------------------------------------------------
@@ -229,7 +220,7 @@ object SimsApplet extends PApplet
   // 
   def main(args: Array[String])
   {
-    var frame = new javax.swing.JFrame("Scala Sims Mashimaro")
+    var frame = new javax.swing.JFrame("Simsましまろ")
     var applet = SimsApplet
 
     frame.getContentPane().add(applet)
@@ -274,94 +265,6 @@ object SimsApplet extends PApplet
   }
 }
 /* ------------------------------------------------------------
- !人の肉体的、精神的状態
- !@memo
- ------------------------------------------------------------ */
-case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aHp:Float)
-{
-  val hunger = Util.clamp(aHunger, -100.f, 100.f)
-  val bladder = Util.clamp(aBladder, -100.f, 100.f)
-  val boke = Util.clamp(aBoke, -100.f, 100.f)
-  val tsukkomi = Util.clamp(aTsukkomi, -100.f, 100.f)
-  val hp = Util.clamp(aHp, -100.f, 100.f)
-
-  // 
-  def affect(r:PersonState):PersonState =
-    {
-      PersonState(hunger + r.hunger, bladder + r.bladder, boke + r.boke, tsukkomi + r.tsukkomi, hp + r.hp)
-    }
-
-  // 
-  def update() = 
-    {
-      PersonState(hunger - 0.001f, bladder - 0.001f, boke - 0.1f, tsukkomi - 0.1f, hp + 0.01f)
-      // new PersonState(hunger - 0.05f, bladder - 0.03f, boke - 0.1f, tsukkomi - 0.1f, hp + 0.1f)
-    }
-
-  // 
-  def calcHungerWeight(x:Float) = 
-  {
-    1.f
-  }
-
-  // 
-  def calcBladderWeight(x:Float) = 
-    {
-      1.f
-    }
-  // 
-  def calcBokeWeight(x:Float) = 
-    {
-      1.f
-    }
-
-  // 
-  def calcTsukkomiWeight(x:Float) = 
-    {
-      1.f
-    }
-
-  // 
-  def calcHpWeight(x:Float) = 
-    {
-      1.f
-    }
-
-  //
-  def calcMode():Float =
-    {
-      calcHungerWeight(hunger) * hunger + calcBladderWeight(bladder) * bladder + calcBokeWeight(boke) * boke + calcTsukkomiWeight(tsukkomi) * tsukkomi + calcHpWeight(hp) * hp
-    }
-
-  //
-  override def toString =
-  {
-    "PersonState:\n hunger " + hunger + "\n bladder " + bladder + "\n boke " + boke + "\n tsukkomi " + tsukkomi + "\n hp " + hp
-  }
-  //
-  def getGraph():Seq[(Float, Float)] = 
-  {
-    for(x <- -100 to 100)
-    	yield (x, calcHungerWeight(x) * x)
-  }
-}
-/* ------------------------------------------------------------
- !行動データ
- !@memo
- ------------------------------------------------------------ */
-class Action(aName:String, aEffect:PersonState)
-{
-  val name = aName
-  var effect = aEffect
-
-  def Run(aActor:APerson)
-  {
-    Logger.debug(name)
-
-    aActor.ChangeState(effect)
-  }
-}
-/* ------------------------------------------------------------
  !行動の対象
  !@memo
  ------------------------------------------------------------ */
@@ -389,7 +292,7 @@ class AObject(name:String, var pos:Vector3, var bounds:Bounds, val world:World, 
 class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Action]) extends ActionTarget
 {
   var state = PersonState(0.f, 0.f, 0.f, 0.f, 0.f)
-  var mode = state.calcMode
+  var mode = state.calcMode()
   var actionTarget:ActionTarget = null
   var nextAction:Action = null
   var bounds = new Bounds(12.f)
@@ -435,32 +338,6 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
   }
 
   // 
-  override def debugDraw():Float = 
-  {
-    val y = super.debugDraw()
-
-    GL.text("Name " + name, pos.X, pos.Y + y + 24)
-    if(nextAction != null)
-      GL.text("nextAction " + nextAction.name, pos.X, pos.Y + y + 36.f)
-    else
-      GL.text("nextAction null", pos.X, pos.Y + y + 36.f)
-    GL.text("Mode " + state.calcMode, pos.X, pos.Y + y + 48.f)
-    GL.text(state.toString, pos.X, pos.Y + y + 60.f)
-
-    // state graph
-    GL.stroke(new Color(0))
-    GL.noFill()
-    val sx = 200
-    val sy = 400
-    val graph = state.getGraph()
-    for(p <- graph)
-      GL.point(sx + p._1, sy + (-p._2))
-      // GL.line(sx + p._1, sy, sx + p._1, sy + p._2)
-  
-    32.f
-  }
-
-  // 
   def ChangeState(effect:PersonState)
   {
     state = state.affect(effect)
@@ -498,7 +375,10 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
   // 
   override def toString() =
   {
-    "APerson " + name + "\n" + state.toString()
+    var act = if(nextAction!= null) nextAction.name else "null"
+    act = " NextAction " + act + "\n"
+    "APerson " + name + "\n" + act + " Mode " + state.calcMode().toString() + "\n" + state.toString()
+    // "APerson " + name + "\n" + "Mode " + state.calcMode().toString() + "nextAction " + if(nextAction!= null) nextAction.name else "null" + state.toString()
   }
 }
 /* ------------------------------------------------------------
@@ -509,6 +389,7 @@ class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameA
 {
   name = caption
   var bounds = Bounds(new Vector3(14 * caption.length, 12, 0.f), 12.f)
+  var timer = 120
 
   val box = new CBoxPrimitive(pos, bounds)
   {
@@ -518,11 +399,8 @@ class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameA
   val label = new CLabelPrimitive(caption, pos, bounds)
   {
     strokeColor = new Color(0, 0, 32, 120)
-    fillColor = new Color(0, 0, 32, 120)
   }
   addPrimitive(label)
-  
-  var timer = 120
 
   // 
   override def tick(delta:Float)
@@ -604,6 +482,85 @@ class World(aW:Int, aH:Int)
   }
 }
 /* ------------------------------------------------------------
+ !人の肉体的、精神的状態
+ !@memo
+ ------------------------------------------------------------ */
+object PersonState
+{
+  val splineHunger = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.3f)))
+  val splineBladder = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.3f)))
+  val splineBoke = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
+  val splineTsukkomi = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
+  val splineHp = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.3f)))
+
+  def calcHungerWeight(x:Float) = PersonState.splineHunger.map(Util.remap(x, -100.f, 100.f))
+  def calcBladderWeight(x:Float) = PersonState.splineBladder.map(Util.remap(x, -100.f, 100.f))
+  def calcBokeWeight(x:Float) = PersonState.splineBoke.map(Util.remap(x, -100.f, 100.f))
+  def calcTsukkomiWeight(x:Float) = PersonState.splineTsukkomi.map(Util.remap(x, -100.f, 100.f))
+  def calcHpWeight(x:Float) = PersonState.splineHp.map(Util.remap(x, -100.f, 100.f))
+
+  def getParamDeclares() = 
+  {
+    List[(String, Float=>Float)](
+      ("お腹", calcHungerWeight),
+      ("便意", calcBladderWeight),
+      ("ボケ", calcBokeWeight),
+      ("ツッコミ", calcTsukkomiWeight),
+      ("体力", calcHpWeight),
+       )
+  }
+
+}
+case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aHp:Float)
+{
+  val hunger = Util.clamp(aHunger, -100.f, 100.f)
+  val bladder = Util.clamp(aBladder, -100.f, 100.f)
+  val boke = Util.clamp(aBoke, -100.f, 100.f)
+  val tsukkomi = Util.clamp(aTsukkomi, -100.f, 100.f)
+  val hp = Util.clamp(aHp, -100.f, 100.f)
+
+  // 
+  def affect(r:PersonState):PersonState =
+    {
+      PersonState(hunger + r.hunger, bladder + r.bladder, boke + r.boke, tsukkomi + r.tsukkomi, hp + r.hp)
+    }
+
+  // 
+  def update() = 
+    {
+      PersonState(hunger - 0.001f, bladder - 0.001f, boke - 0.1f, tsukkomi - 0.1f, hp + 0.01f)
+      // new PersonState(hunger - 0.05f, bladder - 0.03f, boke - 0.1f, tsukkomi - 0.1f, hp + 0.1f)
+    }
+
+  //
+  def calcMode():Float =
+    {
+      PersonState.calcHungerWeight(hunger) * hunger + PersonState.calcBladderWeight(bladder) * bladder + PersonState.calcBokeWeight(boke) * boke + PersonState.calcTsukkomiWeight(tsukkomi) * tsukkomi + PersonState.calcHpWeight(hp) * hp
+    }
+
+  //
+  override def toString =
+  {
+    "PersonState:\n hunger " + hunger + "\n bladder " + bladder + "\n boke " + boke + "\n tsukkomi " + tsukkomi + "\n hp " + hp
+  }
+}
+/* ------------------------------------------------------------
+ !行動データ
+ !@memo
+ ------------------------------------------------------------ */
+class Action(aName:String, aEffect:PersonState)
+{
+  val name = aName
+  var effect = aEffect
+
+  def Run(aActor:APerson)
+  {
+    Logger.debug(name)
+
+    aActor.ChangeState(effect)
+  }
+}
+/* ------------------------------------------------------------
  !ゲーム管理
  !@memo
  ------------------------------------------------------------ */
@@ -627,7 +584,6 @@ class Game(aNum: Int)
   private var startTime = 0
   private var lastTime = 0
   private var app:PApplet = null
-  private var count = 0
   private var debugActor:GameActor = null
 
   // 
@@ -742,13 +698,6 @@ class Game(aNum: Int)
   // {
   //   x0*(1-t)*(1-t)*(1-t)+3*x1*t*(1-t)*(1-t)*+3*x2t*t*(1-t)+x3*t*t*t
   // }
-  def remap(x:Float, min:Float, max:Float):Float = 
-  {
-    if(max - min != 0.f)
-      (x - min) /  (max - min)
-    else
-      (x - min)
-  }
 
   // 
   def draw()
@@ -760,8 +709,7 @@ class Game(aNum: Int)
     app.stroke(0);
     app.fill(0)
     // GL.text("time " + (world.totalTime/60).toInt + "min.", 32, 32);
-    GL.text("time " + world.totalTime + "sec.", 32, 32 + uiFontSize);
-    count += 1
+    GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32);
 
     // ゲーム世界
     world.tick(1.f / 60.f);
@@ -773,46 +721,46 @@ class Game(aNum: Int)
     // }
 
     // 人状態
-    app.stroke(0);
-    app.fill(0)
-    var x = 0
-    for(p <- world.getPersons())
-     {
-      GL.text(p.toString(), 10 + x * 128, 400)
-       x += 1
-     }
-
-    // 関数グラフ
-    app.stroke(0);
-    app.fill(0)
-    val splineHungry = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.1f)))
-    val splineBoke = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
-    val functions = List[Float=>Float](
-      x=> splineHungry.map(remap(x, -100.f, 100.f)),
-      x=> splineBoke.map(remap(x, -100.f, 100.f)),
-      // x => 3 *(x*x) + 1
-      // , x => x*x / 200
-      // , Math.pow(_,3).toFloat/40000
-      // , x => (100*Math.sin( 3.14 * x /180 )).toFloat
-      // , x => Math.abs(x)
-    )
-
-    val sx = 600.f
-    val sy = 300.f
-    val offsetY = 60.f
-    val scale = 0.15f
-    var y=0
-    for(f <- functions)
     {
-      app.stroke(224)
-      GL.line(sx + -100 * scale, sy + y * offsetY, sx + 100 * scale, sy + y * offsetY)
-      GL.line(sx + -100 * scale, sy + y * offsetY - 100*scale, sx + -100 * scale, sy + y * offsetY + 100*scale)
       
-      app.stroke(64, 0, 0)
-      for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
-	GL.point(sx + x * scale, sy + (-f(x) * x * scale) + y * offsetY)
-  
-      y += 1
+      app.stroke(0);
+      app.fill(0)
+      var x = 0
+      val sx = 32
+      val ox = 140
+      val sy = 360
+      for(p <- world.getPersons())
+	{
+	  GL.text(p.toString(), sx + x * ox, sy)
+	  x += 1
+	}
+    }
+
+    // 状態の重み関数グラフ
+    {
+      app.stroke(0);
+      app.fill(0)
+
+      val params = PersonState.getParamDeclares()
+
+      val sx = 700.f
+      val sy = 200.f
+      val oy = 60.f
+      val scale = 0.2f
+      var y=0
+      for(p <- params)
+	{
+	  app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
+	  app.stroke(224)
+	  GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
+	  GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
+	  
+	  app.stroke(64, 0, 0)
+	  for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
+	    GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
+	  
+	  y += 1
+	}
     }
   }
 }
