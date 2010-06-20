@@ -1,12 +1,12 @@
 /* ------------------------------------------------------------
  !Utility Liblary
  ------------------------------------------------------------ */
+package tm8st.util
 
-package util.tm8st
 import processing.core._
 
 /* ------------------------------------------------------------
- !Utility
+ !便利関数まとめ
  !@memo 
  ------------------------------------------------------------ */
 object Util
@@ -15,15 +15,12 @@ object Util
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
   def remap(x:Float, min:Float, max:Float):Float = 
   {
-    if(max - min != 0.f)
-      (x - min) /  (max - min)
-    else
-      (x - min)
+    if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
   }
 }
 /* ------------------------------------------------------------
- !GL
- !@memo 
+ !描画ラッパー
+ !@memo 今のところシングルトンになっているだけ。
  ------------------------------------------------------------ */
 object GL
 {
@@ -39,15 +36,17 @@ object GL
   def line(x0:Float, y0:Float, x1:Float, y1:Float){ g.line(x0, y0, x1, y1) }
 }
 /* ------------------------------------------------------------
- !Logger
+ !ログ出力管理
  !@memo 
  ------------------------------------------------------------ */
 object Logger
 {
+  // ログレベル定数
   val LogError = 3
   val LogWarning = 2
   val LogInfo = 1
   val LogDebug = 0
+
   var currentLevel = LogWarning
 
   def info(msg: => String)
@@ -72,7 +71,7 @@ object Logger
   }
 }
 /* ------------------------------------------------------------
- !
+ !3要素ベクトル
  !@memo
  ------------------------------------------------------------ */
 case class Vector3(aX:Float, aY:Float, aZ:Float)
@@ -93,24 +92,25 @@ case class Vector3(aX:Float, aY:Float, aZ:Float)
 
   //
   def normal():Vector3 =
-    {
-      val len = size()
-      if(len == 0.f)
-	new Vector3(0.f, 0.f, 0.f)
-      else
-	{
-	  val iLen = 1.f / len
-	  new Vector3(X*iLen, Y*iLen, Z*iLen)
-	}
-    }
+  {
+    val len = size()
+    if(len == 0.f)
+      new Vector3(0.f, 0.f, 0.f)
+    else
+      {
+	val iLen = 1.f / len
+	new Vector3(X*iLen, Y*iLen, Z*iLen)
+      }
+  }
 
+  //
   override def toString() =
-    {
-      "Vector3(" + X + ", " + Y + ", " + Z + ")"
-    }  
+  {
+    "Vector3(" + X + ", " + Y + ", " + Z + ")"
+  }  
 }
 /* ------------------------------------------------------------
- !
+ !衝突判定用型
  !@memo
  ------------------------------------------------------------ */
 case class Bounds(val boxExtent:Vector3, val radius:Float)
@@ -123,7 +123,7 @@ case class Bounds(val boxExtent:Vector3, val radius:Float)
   }  
 }
 /* ------------------------------------------------------------
- !色設定用
+ !色型
  !@memo
  ------------------------------------------------------------ */
 case class Color(ar:Int, ag:Int, ab:Int, aa:Int)
@@ -140,7 +140,7 @@ case class Color(ar:Int, ag:Int, ab:Int, aa:Int)
   val a = Util.clamp(aa, 0, 255)
 }
 /* ------------------------------------------------------------
-   !スプライン補間(１次元)
+   !スプライン補間
    !@memo http://sakura.bb-west.ne.jp/spr/damayan/algo/spline.html
 ------------------------------------------------------------ */
 class Spline(points:Array[(Float, Float)])
@@ -197,28 +197,3 @@ class Spline(points:Array[(Float, Float)])
 	       - (z(i) * 2 + z(i + 1)) * h)) * d + y(i);
   }
 }
-/*
- f(-5.5)=0.0293056736081598
- f(-5.0)=0.038461538461538464
- f(-4.5)=0.04761740331491712
- f(-4.0)=0.058823529411764705
- f(-3.5)=0.07468172670683233
- f(-3.0)=0.1
- f(-2.5)=0.1400810292242694
- f(-2.0)=0.2
- f(-1.5)=0.29734709757256067
- f(-1.0)=0.5
- f(-0.5)=0.8205305804854879
- f(0.0)=1.0
- f(0.5)=0.8205305804854879
- f(1.0)=0.5
- f(1.5)=0.2973470975725607
- f(2.0)=0.20000000000000007
- f(2.5)=0.1400810292242694
- f(3.0)=0.10000000000000002
- f(3.5)=0.07468172670683233
- f(4.0)=0.058823529411764705
- f(4.5)=0.04761740331491712
- f(5.0)=0.038461538461538464
- f(5.5)=0.029305673608159794
- */
