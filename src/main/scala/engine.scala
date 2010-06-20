@@ -237,15 +237,19 @@ class World(aW:Int, aH:Int)
 	drawables = aDrawable :: drawables
       }
   }
-  
+
+  // 
   def tick(delta:Float)
   {
-    deltaTime = delta
-    totalTime += delta
+    Profiler.auto("World Tick", "", Color.Black)
+    {
+      deltaTime = delta
+      totalTime += delta
 
-    actors.map(_.tick(delta))
+      actors.map(_.tick(delta))
 
-    actors = actors.filter(_.isDestroy == false)
+      actors = actors.filter(_.isDestroy == false)
+    }
   }
 
   def draw()
@@ -258,7 +262,7 @@ class World(aW:Int, aH:Int)
  !ゲーム管理
  !@memo
  ------------------------------------------------------------ */
-class Game
+abstract class Game
 {
   val title = "Unknwon"
   
@@ -297,10 +301,7 @@ class Game
   }
 
   //
-  def reset(){}
-
-  // 
-  def mouseReleased(mouseX:Int, mouseY:Int, mouseButton: Int){}
+  def reset()
 
   //
   def exit()
@@ -309,9 +310,12 @@ class Game
     state = GameQuit
   }
 
-  // mouseボタンが押しづらいのでキーボードでも押せるようにする
-  def keyPressed(key:Int, g:PApplet){}
-
   // 
-  def draw(){}
+  def mouseReleased(mouseX:Int, mouseY:Int, mouseButton: Int)
+  // mouseボタンが押しづらいのでキーボードでも押せるようにする
+  def keyPressed(key:Int, g:PApplet)
+  // 
+  def draw()
+  // 
+  def tick(delta:Float)
 }

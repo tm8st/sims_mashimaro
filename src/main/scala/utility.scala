@@ -3,6 +3,8 @@
  ------------------------------------------------------------ */
 package tm8st.util
 
+import scala.util._
+import scala.collection.mutable.Stack
 import processing.core._
 
 /* ------------------------------------------------------------
@@ -14,9 +16,9 @@ object Util
   def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
   def remap(x:Float, min:Float, max:Float):Float = 
-  {
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
-  }
+
+  def getCurrentMSec() = GL.g.millis()
 }
 /* ------------------------------------------------------------
  !描画ラッパー
@@ -71,6 +73,105 @@ object Logger
   }
 }
 /* ------------------------------------------------------------
+ !パフォーマンスプロファイラ
+ !@memo 
+ ------------------------------------------------------------ */
+object Profiler
+{
+  var isBeginFrame = true
+  var isActive = true
+  var nodeStack:Stack[Node] = new Stack
+
+  // 
+  case class Node(val symbol:String, val caption:String, val color:Color)
+  {
+    var time:Float = Util.getCurrentMSec()
+    var childs:List[Node] = List()
+
+    def addChild(c:Node){ childs = c :: childs }
+  }
+
+  // 
+  def pushNode(n:Node) =
+  {
+    if(nodeStack.isEmpty == false)
+    {
+      Logger.debug("ProfilterNode: addChild " + " "+nodeStack.top.symbol+" to " + n.symbol)
+      nodeStack.top.addChild(n)
+    }
+    nodeStack.push(n)
+    n
+  }
+  // 
+  def popNode()
+  {
+    nodeStack.pop
+  }
+
+  // 
+  def auto(symbol:String, caption:String, c:Color)(block: => Unit)
+  {
+    if(isActive)
+    {
+      var n = pushNode(new Node(symbol, caption, c))
+      block
+      n.time = Util.getCurrentMSec() - n.time
+      popNode()
+    }
+    else
+    {
+      block
+    }
+  }
+
+  //
+  def beginFrame()
+  {
+    isBeginFrame = true
+    nodeStack.clear()
+    pushNode(new Node("root", "", Color.Black))
+  }
+
+  //
+  def endFrame()
+  {
+    isBeginFrame = false
+    assert(nodeStack.length == 1)
+    if(nodeStack.top.time < 999.f)
+      nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
+  }
+
+  //
+  def draw(x:Int, y:Int)
+  {
+    // 描画するためにはすべてのノードの時間が計測済みでなければならない
+    assert(nodeStack.length == 1)
+    if(isBeginFrame)
+    {
+      nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
+    }
+
+    drawNode(nodeStack.top, x, y, 0)
+  }
+  //
+  private def drawNode(n:Node, x:Int, y:Int, depth:Int)
+  {
+    // Logger.debug("Profilter: drawNode "+n.name+" childNum " + n.childs.length)
+ 
+    GL.stroke(n.color)
+    GL.fill(n.color)
+
+    val space = "-"
+    
+    GL.text(space * depth + n.symbol + " " + n.caption +": " + n.time + "msec", x, y)
+    
+    for(c <- n.childs)
+    {
+      drawNode(c, x, y + 14 * (1 + n.childs.indexOf(c)), depth +1)
+    }
+  }
+}
+/* ------------------------------------------------------------
  !3要素ベクトル
  !@memo
  ------------------------------------------------------------ */
@@ -121,6 +222,18 @@ case class Bounds(val boxExtent:Vector3, val radius:Float)
   {
       "Bounds boxExtent " + boxExtent + " radius" + radius
   }  
+}
+/* ------------------------------------------------------------
+ !色型
+ !@memo
+ ------------------------------------------------------------ */
+object Color
+{
+  val Black = Color(0, 0, 0, 255)
+  val White = Color(255, 255, 255, 255)
+  val Red = Color(255, 0, 0, 255)
+  val Green = Color(0, 255, 0, 255)
+  val Blue = Color(0, 0, 255, 255)
 }
 /* ------------------------------------------------------------
  !色型

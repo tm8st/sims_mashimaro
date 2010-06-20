@@ -128,28 +128,31 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   // 
   override def tick(delta:Float)
   {
-    super.tick(delta)
-
-    if(currentAction != null)
+    Profiler.auto("Person Tick", name, Color.Black)
     {
-      actionCounter += delta
-      if(actionCounter > 2.f)
-      	{
-      	  Logger.debug(name + " Run Action " + currentAction.name)
+      super.tick(delta)
 
-      	  currentAction.Run(this)
-      	  world.addActor(new ASerif(currentAction.name, pos, world))
+      if(currentAction != null)
+	{
+	  actionCounter += delta
+	  if(actionCounter > 2.f)
+      	    {
+      	      Logger.debug(name + " Run Action " + currentAction.name)
 
-      	  actionCounter = 0.f
-      	  currentAction = null
-      	  currentActionTarget = null
-      	}
+      	      currentAction.Run(this)
+      	      world.addActor(new ASerif(currentAction.name, pos, world))
+
+      	      actionCounter = 0.f
+      	      currentAction = null
+      	      currentActionTarget = null
+      	    }
+	}
+      
+      aiRoot.tick(delta)
+      
+      // State
+      state = state.update(delta)
     }
-    
-    aiRoot.tick(delta)
-    
-    // State
-    state = state.update(delta)
   }
 
   // 

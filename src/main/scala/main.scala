@@ -168,7 +168,7 @@ object SimsGame extends Game
 
   // sizes
   override protected val WindowSizeX = 800
-  override protected val WindowSizeY = 800
+  override protected val WindowSizeY = 680
   override protected val uiFontSize = 12
 
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
@@ -276,83 +276,92 @@ object SimsGame extends Game
   }
 
   // 
+  override def tick(delta:Float)
+  {
+    Profiler.auto("Game Tick", "", Color.Black)
+    {
+      world.tick(delta)
+    }
+  }
+  
+  // 
   override def draw()
   {
-    app.background(224)
-
-    // ヘッダ
-    app.textFont(uiFont)
-    app.stroke(0);
-    app.fill(0)
-    // GL.text("time " + (world.totalTime/60).toInt + "min.", 32, 32);
-    GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32);
-
-    // ゲーム世界
-    world.tick(1.f / 30.f);
-    world.draw();
-
-    // if(debugActor != null)
-    // {
-    //   debugActor.debugDraw()
-    // }
-
-    // 存在リスト
+    Profiler.auto("Game Draw", "", Color.Black)
     {
-      world.draw();
+      app.background(224)
+
+      // ゲーム世界
+      world.draw()
+      
+      // ヘッダ
+      app.textFont(uiFont)
       app.stroke(0);
       app.fill(0)
-      var x = 0
-      val sx = 32
-      val sy = 32
-      val oy = uiFontSize
-      for(a <- world.getActors())
-	{
-	  GL.text(a.name, sx, sy + x * oy)
-	  x += 1
-	}
-    }
-    
-    // 人状態
-    {  
-      app.stroke(0);
-      app.fill(0)
-      var x = 0
-      val sx = 32
-      val ox = 140
-      val sy = 360
-      for(p <- world.getPersons())
-	{
-	  GL.text(p.toString(), sx + x * ox, sy)
-	  x += 1
-	}
+      GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32)
+      GL.text("processing millis " + Util.getCurrentMSec() + "msec.", 32, WindowSizeY-16)
+
+      // 存在リスト
+      {
+	world.draw();
+	app.stroke(0);
+	app.fill(0)
+	var x = 0
+	val sx = 640
+	val sy = 500
+	val oy = uiFontSize
+	for(a <- world.getActors())
+	  {
+	    GL.text(a.name, sx, sy + x * oy)
+	    x += 1
+	  }
+      }
+      
+      // 人状態
+      {  
+	app.stroke(0);
+	app.fill(0)
+	var x = 0
+	val sx = 32
+	val ox = 140
+	val sy = 360
+	for(p <- world.getPersons())
+	  {
+	    GL.text(p.toString(), sx + x * ox, sy)
+	    x += 1
+	  }
+      }
+
+      // 状態の重み関数グラフ
+      {
+	app.stroke(0);
+	app.fill(0)
+
+	val params = PersonState.getParamDeclares()
+
+	val sx = 700.f
+	val sy = 80.f
+	val oy = 60.f
+	val scale = 0.2f
+	var y=0
+	for(p <- params)
+	  {
+	    app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
+	    app.stroke(224)
+	    GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
+	    GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
+	    
+	    app.stroke(64, 0, 0)
+	    for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
+	      GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
+	    
+	    y += 1
+	  }
+      }
     }
 
-    // 状態の重み関数グラフ
-    {
-      app.stroke(0);
-      app.fill(0)
-
-      val params = PersonState.getParamDeclares()
-
-      val sx = 700.f
-      val sy = 80.f
-      val oy = 60.f
-      val scale = 0.2f
-      var y=0
-      for(p <- params)
-	{
-	  app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
-	  app.stroke(224)
-	  GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
-	  GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
-	  
-	  app.stroke(64, 0, 0)
-	  for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
-	    GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
-	  
-	  y += 1
-	}
-    }
+    // プロファイラー描画
+    Profiler.draw(32, 32)
   }
   //
   def selectActor(scrX:Int, scrY:Int):GameActor = 
@@ -372,6 +381,8 @@ object SimsApplet extends PApplet
   // 
   var game = SimsGame
 
+  val needFrame = 60.f
+  
   // 
   def main(args: Array[String])
   {
@@ -387,13 +398,19 @@ object SimsApplet extends PApplet
   override def setup()
   {
     game.setup(this)
-    frameRate(30);
+    frameRate(needFrame)
   }
 
   // 
   override def draw()
   {
+    Profiler.beginFrame()
+
+    game.tick(1.f/needFrame)
+
     game.draw()
+
+    Profiler.endFrame()
 
     if(game.isQuit())
       {
