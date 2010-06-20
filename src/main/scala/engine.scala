@@ -13,8 +13,9 @@ import tm8st.util._
  ------------------------------------------------------------ */
 trait GameObject
 {
-  var name:String = "GameObject"
-  
+  def gameObjectName = "GameObject"
+  def name = gameObjectName
+
   private var bDestroy:Boolean = false
 
   def setDestroy(){ bDestroy = true }

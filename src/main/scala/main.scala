@@ -64,12 +64,13 @@ trait ActionTarget extends SimsActor
  !オブジェクトアクタ
  !@memo
  ------------------------------------------------------------ */
-class AObject(aName:String, var pos:Vector3, var bounds:Bounds, val world:World, val actions:List[Action]) extends ActionTarget
+class AObject(val objectName:String, var pos:Vector3, var bounds:Bounds, val world:World, val actions:List[Action]) extends ActionTarget
 {
-  name = aName
+  override def gameObjectName = "AObject"
+  override def name = gameObjectName + ":" + objectName
 
   addPrimitive(new CBoxPrimitive(new Vector3(0.f), bounds))
-  val label = new CLabelPrimitive(name, new Vector3(0.f), bounds)
+  val label = new CLabelPrimitive(objectName, new Vector3(0.f), bounds)
   {
     fillColor = new Color(128, 128, 255)
   }
@@ -81,7 +82,9 @@ class AObject(aName:String, var pos:Vector3, var bounds:Bounds, val world:World,
  ------------------------------------------------------------ */
 class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameActor
 {
-  name = caption
+  override def gameObjectName = "ASerif"
+  override def name = gameObjectName + ":" + caption
+
   var bounds = Bounds(new Vector3(14 * caption.length, 12, 0.f), 12.f)
   var timer = 120
 
@@ -128,14 +131,12 @@ class SimsWorld(aW:Int, aH:Int) extends World(aW, aH)
     persons = person :: persons
     actionTargets = person :: actionTargets
     addActor(person)
-    // actors = person :: persons
   }
   def addObject(aObject:AObject)
   {
     objects = aObject :: objects
     actionTargets = aObject :: actionTargets
     addActor(aObject)
-    // actors = aObject :: actors
   }
 
   def getPersons() = persons
@@ -161,7 +162,7 @@ class SimsWorld(aW:Int, aH:Int) extends World(aW, aH)
  !シムズゲーム管理
  !@memo
  ------------------------------------------------------------ */
-class SimsGame extends Game
+object SimsGame extends Game
 {
   override val title = "Simsましまろ"
 
@@ -173,7 +174,7 @@ class SimsGame extends Game
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
   
   // 
-  override def setup(g: PApplet)
+  override def setup(g:PApplet)
   {
     super.setup(g)
 
@@ -222,19 +223,19 @@ class SimsGame extends Game
     
     // world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
     // world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
-    // world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
-    // world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
-    world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
+    world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
+    world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
+    // world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
     
     //define objects
-    // world.addObject(new AObject("空間", Vector3(320, 320, 0), new Bounds(320.f), world, List(wordBoke)))
-    // world.addObject(new AObject("ベッド", Vector3(64, 64, 0), new Bounds(64.f), world, List(push, sleep, sit)))
-    // world.addObject(new AObject("トイレ", Vector3(32, 256, 0), new Bounds(32.f), world, List(push, toilet)))
-    // world.addObject(new AObject("冷蔵庫", Vector3(420, 258, 0), new Bounds(24.f), world, List(push, eat, drink)))
-    // world.addObject(new AObject("机", Vector3(196, 128, 0), new Bounds(24.f), world, List(sit, eatSnack, drink)))
-    // world.addObject(new AObject("勉強机", Vector3(128, 256, 0), new Bounds(16.f), world, List(push)))
-    // world.addObject(new AObject("絵本", Vector3(180, 256, 0), new Bounds(8.f), world, List(yomu)))
-    // world.addObject(new AObject("テレビ", Vector3(320, 240, 0), new Bounds(12.f), world, List(wordBoke, watchTV)))
+    world.addObject(new AObject("空間", Vector3(320, 320, 0), new Bounds(320.f), world, List(wordBoke)))
+    world.addObject(new AObject("ベッド", Vector3(64, 64, 0), new Bounds(64.f), world, List(push, sleep, sit)))
+    world.addObject(new AObject("トイレ", Vector3(32, 256, 0), new Bounds(32.f), world, List(push, toilet)))
+    world.addObject(new AObject("冷蔵庫", Vector3(420, 258, 0), new Bounds(24.f), world, List(push, eat, drink)))
+    world.addObject(new AObject("机", Vector3(196, 128, 0), new Bounds(24.f), world, List(sit, eatSnack, drink)))
+    world.addObject(new AObject("勉強机", Vector3(128, 256, 0), new Bounds(16.f), world, List(push)))
+    world.addObject(new AObject("絵本", Vector3(180, 256, 0), new Bounds(8.f), world, List(yomu)))
+    world.addObject(new AObject("テレビ", Vector3(320, 240, 0), new Bounds(12.f), world, List(wordBoke, watchTV)))
   }
 
   // 
@@ -287,7 +288,7 @@ class SimsGame extends Game
     GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32);
 
     // ゲーム世界
-    world.tick(1.f / 60.f);
+    world.tick(1.f / 30.f);
     world.draw();
 
     // if(debugActor != null)
@@ -369,7 +370,7 @@ class SimsGame extends Game
 object SimsApplet extends PApplet
 {
   // 
-  var game = new SimsGame()
+  var game = SimsGame
 
   // 
   def main(args: Array[String])
@@ -385,8 +386,8 @@ object SimsApplet extends PApplet
   // 
   override def setup()
   {
-    game.setup(this)    
-    frameRate(60);
+    game.setup(this)
+    frameRate(30);
   }
 
   // 

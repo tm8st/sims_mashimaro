@@ -1,6 +1,7 @@
 package tm8st.aigoal
 
 import scala.util._
+import tm8st.util._
 
 /* ------------------------------------------------------------
  !ゴールAI周りで使用する定数等の定義
@@ -14,6 +15,11 @@ object AIGoal
   val STATE_FINISHED = 2
   val STATE_FAILED = 3
   val STATE_INIT = 4
+
+  private val stateID2StringTable = List("Active", "InActive", "Finished", "Failed", "Init")
+  
+  def stateID2String(id:Int) = 
+    stateID2StringTable(id)
 }
 /* ------------------------------------------------------------
  !ゴールAIの抽象基底クラス
@@ -21,19 +27,38 @@ object AIGoal
  ------------------------------------------------------------ */
 abstract class AIGoal[TActor](aOwner:TActor)
 {
-  override def toString() = "AIGoal"
-
+  def name() = "AIGoal"
+  override def toString() = name() + " " + AIGoal.stateID2String(state)
+  
+  def getDepth():Int =
+  {
+    val d = if(parent != null) parent.getDepth() else 0
+    1 + d
+  }
+  
   type SelfType = AIGoal[TActor]
 
+  private var parent:SelfType = null
+  def setParent(p:SelfType){ parent = p }
   private val owner:TActor = aOwner
+
   def getOwner() = owner
   
   //! 有効化
-  def activate(){}
+  def activate()
+  {
+    Logger.debug(name + " activate.")
+  }
   //! 更新
-  def tick(delta:Float){}
+  def tick(delta:Float)
+  {
+    Logger.debug(name + " tick.")
+  }
   //! 終了
-  def terminate(){}
+  def terminate()
+  {
+    Logger.debug(name + " terminate.")
+  }
 
   //! 子ゴールの追加
   def addSubGoal(subGoal:SelfType){ assert(false); }
@@ -41,14 +66,6 @@ abstract class AIGoal[TActor](aOwner:TActor)
   def removeSubGoal(subGoal:SelfType){}
   //! 子ゴールの全削除
   def removeSubGoals(){}
-
-  // //! 現在実行中のAIリスト取得
-  // def getActiveGoals(ILArray<AIGoal*>* pRet)
-  // {
-  //   if(IsActive()) pRet->push_back(this);
-
-  //   return pRet;
-  // }
 
   def isActive() = state == AIGoal.STATE_ACTIVE
   def isInActive() = state == AIGoal.STATE_INACTIVE
@@ -58,10 +75,10 @@ abstract class AIGoal[TActor](aOwner:TActor)
 
   def isNeedsRemove() = isFinished() || isFailed()
 
-  def setActive(){ state = AIGoal.STATE_ACTIVE }
-  def setInActive(){ state = AIGoal.STATE_INACTIVE }
-  def setFinished(){ state = AIGoal.STATE_FINISHED }
-  def setFailed(){ state = AIGoal.STATE_FAILED }
+  protected def setActive(){ state = AIGoal.STATE_ACTIVE }
+  protected def setInActive(){ state = AIGoal.STATE_INACTIVE }
+  protected def setFinished(){ state = AIGoal.STATE_FINISHED }
+  protected def setFailed(){ state = AIGoal.STATE_FAILED }
 
   def getState():Int = state
 
@@ -73,23 +90,19 @@ abstract class AIGoal[TActor](aOwner:TActor)
  ------------------------------------------------------------ */
 abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
 {
+  override def name() = "AIGoalComposite"
   override def toString() =
   {
+    var offBase = getDepth()
+    var space = "-"
     var ret = ""
-    val space = "a"
+    for(g <- subGoals)
+    {
+      ret += "\n" + space * offBase + g.toString()
+    }
+    super.toString() + ret
 
-    // subGoals.reduceLeft()(_.toString() + _.toString())
-    // subGoals.reduceLeft(AIGoal => String)(x => space * subGoals.indexOf(x) + x.toString() + "\n")
-
-    // println(subGoals.reduceLeft((a, b) => a.toString() + "\n" + " " * ls.indexOf(b) + b.toString()))
-
-    for(s <- subGoals)
-      if(s.isActive())
-    	ret += space * subGoals.indexOf(s) + s.toString() + "\n"
-    
-    ret
-
-    // subGoals.filter(_.isActive()).reduceLeft("") + (_.toString() + _.toString() + "\n")
+    // super.toString() + subGoals.filter(_.isActive()).map("\n " + _.toString())
   }
 
   type BaseType = AIGoal[TActor]
@@ -98,15 +111,13 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
   
   override def addSubGoal(subGoal:BaseType)
   {
-    subGoals = subGoal :: subGoals;
-
-    subGoal.activate();
+    subGoals = subGoal :: subGoals
+    subGoal.setParent(this)
   }
   override def removeSubGoal(subGoal:BaseType)
   {
-    subGoal.activate();
-
-    subGoal.terminate();
+    subGoal.terminate()
+    subGoal.setParent(null)
     subGoals -= subGoal
   }
   override def removeSubGoals()
@@ -117,17 +128,21 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
   def tickSubGoals(delta:Float):Int =
   {
     // 終了したものを削除
+    val prevLen = subGoals.length
     for(g <- subGoals)
       if(g.isNeedsRemove)
 	removeSubGoal(g)
     // subGoals = subGoals.filter(_.isNeedsRemove() == false)
     // subGoals = subGoals.filter(_.isFinished() == false && _.isFailed() == false)
-
+    
     // 更新
     var ret = AIGoal.STATE_ACTIVE
     if(subGoals.isEmpty == false)
     {
       val hd = subGoals.head
+      if(prevLen != subGoals.length)
+	hd.activate()
+
       hd.tick(delta)
       if(hd.isNeedsRemove() && subGoals.length == 1)
 	ret = AIGoal.STATE_FINISHED
@@ -148,7 +163,7 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
  ------------------------------------------------------------ */
 abstract class AIGoalAtomic[TActor](owner:TActor) extends AIGoal(owner)
 {
-  override def toString() = "AIGoalAtomic"
+  override def name() = "AIGoalAtomic"
 }
 /* ------------------------------------------------------------
    !テストコード

@@ -91,8 +91,11 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
  !人物アクタ
  !@memo
  ------------------------------------------------------------ */
-class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Action], var actionChannel:Int) extends ActionTarget
+class APerson(val personName:String, var pos:Vector3, val world:World, val actions:List[Action], var actionChannel:Int) extends ActionTarget
 {
+  override def gameObjectName = "APerson"
+  override def name = gameObjectName + ":" + personName
+
   var state = PersonState(0.f, 0.f, 100.f, 100.f, 0.f, 100.f)
   var bounds = new Bounds(16.f)
   var walkSpeed = 50.f
@@ -115,7 +118,7 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
   }
   addPrimitive(sphere)
 
-  val label = new CLabelPrimitive(name, pos, bounds)
+  val label = new CLabelPrimitive(personName, pos, bounds)
   {
     fillColor = new Color(0, 0, 32)
     setDrawPriority(1)
@@ -131,13 +134,16 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
     {
       actionCounter += delta
       if(actionCounter > 2.f)
-	{
-	  currentAction.Run(this)
-	  world.addActor(new ASerif(currentAction.name, pos, world))
+      	{
+      	  Logger.debug(name + " Run Action " + currentAction.name)
 
-	  currentAction = null
-	  currentActionTarget = null
-	}
+      	  currentAction.Run(this)
+      	  world.addActor(new ASerif(currentAction.name, pos, world))
+
+      	  actionCounter = 0.f
+      	  currentAction = null
+      	  currentActionTarget = null
+      	}
     }
     
     aiRoot.tick(delta)
@@ -146,46 +152,35 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
     state = state.update(delta)
   }
 
+  // 
   def startAction(actionTarget:ActionTarget, action:Action)
   {
+    Logger.debug(name + " Start Action " + action.name)
+
     actionCounter = 0.f
     currentAction = action
     currentActionTarget = actionTarget
+    
+    // action.Run(this)
+    // world.addActor(new ASerif(action.name, pos, world))
   }
-
+  // 
   def isActionEnd() = currentAction == null
+  // 
   def isCanAction(actionTarget:ActionTarget, action:Action) =
   {
     val dif = actionTarget.pos - pos;
     dif.size < (bounds.radius + actionTarget.bounds.radius)
   }
+  // 
   def isReachable(actionTarget:ActionTarget) = true
-
+  // 
   def moveToTarget(actionTarget:ActionTarget)
   {
     val dif = actionTarget.pos - pos;
     if(dif.size > (bounds.radius + actionTarget.bounds.radius))
       pos = pos + dif.normal() * walkSpeed * world.deltaTime
   }
-  
- // if(nextAction == null)
-    //   {
-    // 	thinkNextAction()
-    //   }
-    // else
-    //   {
-    // 	val dif = actionTarget.pos - pos;
-    // 	Logger.debug("move: " + name + " dif " + dif.toString + " difSize " + dif.size)
-    // 	if(dif.size > (bounds.radius + actionTarget.bounds.radius))
-    // 	  pos = pos + dif.normal() * walkSpeed * delta
-    // 	else
-    // 	  {
-    // 	    nextAction.Run(this)
-    // 	    world.addActor(new ASerif(nextAction.name, pos, world))
-    // 	    nextAction = null
-    // 	    actionTarget = null
-    // 	  }
-    //   }
 
   // 
   def ChangeState(effect:PersonState)
@@ -198,7 +193,7 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
   {
     // var act = if(nextAction!= null) nextAction.name else "null"
     // act = " NextAction " + act + "\n"
-    "APerson " + name + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
+    "APerson:" + personName + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
   }
 }
 /* ------------------------------------------------------------
@@ -207,7 +202,7 @@ class APerson(name:String, var pos:Vector3, val world:World, val actions:List[Ac
 ------------------------------------------------------------ */
 class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 {
-  override def toString() = "Root\n" + super.toString()
+  override def name() = "AIRoot:"
 
   // 
   override def activate()
@@ -239,22 +234,24 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
     var bestActionTarget:ActionTarget = null
     for(at <- getOwner.simsWorld().getActionTargets(); a <- at.actions.filter(_.canDo(getOwner)))
     {
-      if(at != this)
-	{
-	  var newState = getOwner.state.affect(a.effect)
-	  Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
-	  if(newState.calcMode() > maxState.calcMode())
-	    {
-	      maxState = newState
-	      bestAction = a
-	      bestActionTarget = at
-	    }
-	}
+      if(getOwner.equals(at) == false)
+      {
+	var newState = getOwner.state.affect(a.effect)
+	Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
+	if(newState.calcMode() > maxState.calcMode())
+	  {
+	    maxState = newState
+	    bestAction = a
+	    bestActionTarget = at
+	  }
+      }
     }
 
     if(bestAction != null)
     {
       addSubGoal(new PGAction(getOwner, bestAction, bestActionTarget))
+      subGoals.head.activate()
+
       Logger.debug("Set Action: " + getOwner.name + " " + bestAction.name)
     }
   }
@@ -265,17 +262,21 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 ------------------------------------------------------------ */
 class PGAction(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalComposite[APerson](aOwner)
 {
-  override def toString() = "PGAction("+action.name+" target "+actionTarget.name+")\n" + super.toString()
+  override def name() = "PGAction("+action.name+" target "+actionTarget.name+")"
+  // override def toString() = name + \n" + super.toString()
 
   // 
   override def activate()
   {
     super.activate()
 
-    addSubGoal(new PGActionRun(getOwner, action, actionTarget))
-    addSubGoal(new PGActionMoveTarget(getOwner, action, actionTarget))
-
-    setActive()
+    if(isActive() == false)
+    {
+      addSubGoal(new PGActionRun(getOwner, action, actionTarget))
+      addSubGoal(new PGActionMoveTarget(getOwner, action, actionTarget))
+      subGoals.head.activate()
+      setActive()
+    }
   }
 
   // 
@@ -296,7 +297,7 @@ class PGAction(aOwner:APerson, val action:Action, val actionTarget:ActionTarget)
 ------------------------------------------------------------ */
 class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalAtomic[APerson](aOwner)
 {
-  override def toString() = "PGActionMoveTarget("+action.name+" target "+actionTarget.name+")\n" + super.toString()
+  override def name() = "PGActionMoveTarget" + "("+action.name+" target "+actionTarget.name+")"
 
   var checkIntervalCounter = 0.f
   
@@ -347,7 +348,7 @@ class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:Act
 ------------------------------------------------------------ */
 class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalAtomic[APerson](aOwner)
 {
-  override def toString() = "PGActionRun("+action.name+" target "+actionTarget.name+")\n" + super.toString()
+  override def name() = "PGActionRun" + "("+action.name+" target "+actionTarget.name+")"
 
   var checkIntervalCounter = 0.f
   
@@ -357,6 +358,7 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
     super.activate()
 
     checkIntervalCounter = 0.f
+
     if(getOwner.isCanAction(actionTarget, action))
     {
       getOwner.startAction(actionTarget, action)
