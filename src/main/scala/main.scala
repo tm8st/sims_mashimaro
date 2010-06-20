@@ -12,39 +12,6 @@ import tm8st.aigoal._
 import tm8st.sims._
 
 /* ------------------------------------------------------------
- !行動データ object
- !@memo
- ------------------------------------------------------------ */
-object Action
-{
-  val ChannelBoke = 0x01
-  val ChannelTsukkomi = 0x02
-  val ChannelBisyoujo = 0x04
-  val ChannelMatsuri = 0x08
-  val ChannelOyaji = 0x10
-  val ChannelUsual = 0x20
-  val ChannelAll = 0xff
-}
-/* ------------------------------------------------------------
- !行動データ
- !@memo
- ------------------------------------------------------------ */
-class Action(val name:String, val effect:PersonState, val channel:Int)
-{
-  // 
-  def canDo(person:APerson):Boolean = (channel & person.actionChannel) > 0
-
-  // 
-  def Run(aActor:APerson)
-  {
-    if(canDo(aActor) == false)
-      Logger.error("invalid pair action: " + name + " " + aActor.name)
-    
-    Logger.debug(name)
-    aActor.ChangeState(effect)
-  }
-}
-/* ------------------------------------------------------------
  !行動の対象
  !@memo
  ------------------------------------------------------------ */
@@ -289,32 +256,39 @@ object SimsGame extends Game
   {
     Profiler.auto("Game Draw", "", Color.Black)
     {
-      app.background(224)
+      app.background(232)
 
       // ゲーム世界
       world.draw()
       
       // ヘッダ
-      app.textFont(uiFont)
-      app.stroke(0);
-      app.fill(0)
-      GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32)
-      GL.text("processing millis " + Util.getCurrentMSec() + "msec.", 32, WindowSizeY-16)
+      {
+	app.textFont(uiFont)
+	GL.stroke(Color.Black)
+	GL.fill(Color.Black)
+	GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32)
+	GL.text("processing millis " + Util.getCurrentMSec() + "msec.", 32, WindowSizeY-16)
+      }
+
+      world.draw()
 
       // 存在リスト
       {
-	world.draw();
-	app.stroke(0);
-	app.fill(0)
-	var x = 0
-	val sx = 640
-	val sy = 500
-	val oy = uiFontSize
-	for(a <- world.getActors())
-	  {
-	    GL.text(a.name, sx, sy + x * oy)
-	    x += 1
-	  }
+	GL.stroke(Color.Black)
+	GL.fill(Color.Black)
+	val sx = 300
+	val sy = 32
+
+	GL.text("Actors:" + world.getActors().map("\n" + _.name).reduceLeft(_ + _), sx, sy)
+
+	// var x = 0
+	// val oy = uiFontSize
+	// GL.text("Actors:", sx, sy)
+	// for(a <- world.getActors())
+	// {
+	//   GL.text(a.name, sx, sy + x * oy)
+	//   x += 1
+	// }
       }
       
       // 人状態
@@ -373,65 +347,18 @@ object SimsGame extends Game
   }
 }
 /* ------------------------------------------------------------
- !アプレット
+ !Sims用アプレット
  !@memo
  ------------------------------------------------------------ */
-object SimsApplet extends PApplet
+object SimsApplet extends MyApplet
 {
   // 
-  var game = SimsGame
-
-  val needFrame = 60.f
+  override def game = SimsGame
+  override val needFrame = 60.f
   
   // 
-  def main(args: Array[String])
+  override def main(args: Array[String])
   {
-    val frame = new javax.swing.JFrame(game.title)
-    
-    frame.getContentPane().add(this)
-    this.init()
-    frame.pack()
-    frame.setVisible(true)
-  }
-
-  // 
-  override def setup()
-  {
-    game.setup(this)
-    frameRate(needFrame)
-  }
-
-  // 
-  override def draw()
-  {
-    Profiler.beginFrame()
-
-    game.tick(1.f/needFrame)
-
-    game.draw()
-
-    Profiler.endFrame()
-
-    if(game.isQuit())
-      {
-	noLoop()
-	System.exit(0)
-      }
-  }
-
-  // 
-  override def mouseReleased()
-  {
-    Logger.debug("mouseReleased: " + mouseX + " " + mouseY + "button " + mouseButton)
-
-    game.mouseReleased(mouseX, mouseY, mouseButton)
-  }
-
-  // 
-  override def keyPressed()
-  {
-    Logger.debug("keyPressed: " + key)
-
-    game.keyPressed(key, this)
+    super.main(args)
   }
 }

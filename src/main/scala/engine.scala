@@ -300,6 +300,9 @@ abstract class Game
     reset()
   }
 
+  def mouseReleased(mouseX:Int, mouseY:Int, mouseButton: Int)
+  def keyPressed(key:Int, g:PApplet)
+
   //
   def reset()
 
@@ -311,11 +314,68 @@ abstract class Game
   }
 
   // 
-  def mouseReleased(mouseX:Int, mouseY:Int, mouseButton: Int)
-  // mouseボタンが押しづらいのでキーボードでも押せるようにする
-  def keyPressed(key:Int, g:PApplet)
-  // 
   def draw()
+
   // 
   def tick(delta:Float)
+}
+/* ------------------------------------------------------------
+ !自分用アプレット
+ !@memo
+ ------------------------------------------------------------ */
+abstract class MyApplet extends PApplet
+{
+  // 
+  def game:Game
+  val needFrame = 60.f
+  
+  // 
+  def main(args: Array[String])
+  {
+    val frame = new javax.swing.JFrame(game.title)
+    
+    frame.getContentPane().add(this)
+    this.init()
+    frame.pack()
+    frame.setVisible(true)
+  }
+
+  // 
+  override def setup()
+  {
+    game.setup(this)
+    frameRate(needFrame)
+  }
+
+  // 
+  override def mouseReleased()
+  {
+    Logger.debug("mouseReleased: " + mouseX + " " + mouseY + "button " + mouseButton)
+
+    game.mouseReleased(mouseX, mouseY, mouseButton)
+  }
+
+  // 
+  override def keyPressed()
+  {
+    Logger.debug("keyPressed: " + key)
+
+    game.keyPressed(key, this)
+  }
+  // 
+  override def draw()
+  {
+    Profiler.beginFrame()
+
+    game.tick(1.f/needFrame)
+    game.draw()
+
+    Profiler.endFrame()
+
+    if(game.isQuit())
+    {
+      noLoop()
+      System.exit(0)
+    }
+  }
 }

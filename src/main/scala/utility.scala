@@ -144,14 +144,19 @@ object Profiler
   //
   def draw(x:Int, y:Int)
   {
-    // 描画するためにはすべてのノードの時間が計測済みでなければならない
+    // 描画するためにはすべてのノードの時間が計測済みでなければならないため
     assert(nodeStack.length == 1)
+  
     if(isBeginFrame)
     {
       nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
     }
 
-    drawNode(nodeStack.top, x, y, 0)
+    GL.stroke(Color.Black)
+    GL.fill(Color.Black)
+
+    GL.text("Profiler:", x, y)
+    drawNode(nodeStack.top, x, y + 16, 0)
   }
   //
   private def drawNode(n:Node, x:Int, y:Int, depth:Int)
