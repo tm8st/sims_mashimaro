@@ -276,11 +276,12 @@ abstract class Game
   // sizes
   protected val WindowSizeX = 800
   protected val WindowSizeY = 800
+  
   protected val uiFontSize = 12
   protected val uiFontName = "SanSerif"
+  protected var uiFont:GLFont = null
 
   protected var state = GameStop
-  protected var uiFont:PFont = new PFont
   protected var startTime = 0
   protected var lastTime = 0
   protected var app:PApplet = null
@@ -295,7 +296,7 @@ abstract class Game
     app = g
     app.size(WindowSizeX, WindowSizeY);
 
-    uiFont = app.createFont(uiFontName, uiFontSize)
+    uiFont = new GLFont(uiFontSize, uiFontName)
 
     reset()
   }

@@ -19,6 +19,15 @@ object Util
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
 
   def getCurrentMSec() = GL.g.millis()
+
+  def getMaxLineLength(strs:List[String]) =
+  {
+    if(strs.isEmpty == false)
+      strs.reduceLeft((a, b) => if(a.length > b.length) a else b).length
+    else
+      0
+  }
+  def getLineNum(strs:List[String]) = strs.length
 }
 /* ------------------------------------------------------------
  !描画ラッパー
@@ -33,9 +42,26 @@ object GL
   def noFill(){ g.noFill() }
   def rect(x:Float, y:Float, w:Float, h:Float){ g.rect(x, y, w, h) }
   def ellipse(x:Float, y:Float, w:Float, h:Float){ g.ellipse(x, y, w, h); }
-  def text(s:String, x:Float, y:Float){ g.text(s, x, y) }
   def point(x:Float, y:Float){ g.point(x, y) }
   def line(x0:Float, y0:Float, x1:Float, y1:Float){ g.line(x0, y0, x1, y1) }
+  def textFont(f:GLFont){ g.textFont(f.handle) }
+  def text(s:String, x:Float, y:Float){ g.text(s, x, y) }
+  def text(s:String, x:Float, y:Float, font:GLFont)
+  {
+    g.textFont(font.handle)
+    g.text(s, x + font.width/2, y + font.height)
+  }
+}
+/* ------------------------------------------------------------
+   !フォント
+   !@memo
+------------------------------------------------------------ */
+class GLFont(val size:Int, val faceName:String)
+{
+  val width = size * 0.65f
+  val height = size
+
+  val handle = GL.g.createFont(faceName, height)
 }
 /* ------------------------------------------------------------
  !ログ出力管理
@@ -129,7 +155,7 @@ object Profiler
   {
     isBeginFrame = true
     nodeStack.clear()
-    pushNode(new Node("root", "", Color.Black))
+    pushNode(new Node("Root", "", Color.Black))
   }
 
   //
@@ -142,6 +168,25 @@ object Profiler
   }
 
   //
+  def getInfo():List[String] =
+  {
+    // 状態を確定するためにはすべてのノードの時間が計測済みでなければならないため
+    assert(nodeStack.length == 1)
+    
+    if(isBeginFrame)
+      {
+	nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
+      }
+    List("Profiler:") ::: getInfoNode(nodeStack.top, 0)
+  }
+  //
+  private def getInfoNode(n:Node, depth:Int):List[String] =
+  {
+    val space = "-"
+
+    val child:List[String] = n.childs.flatMap(getInfoNode(_, depth + 1))
+    List(space * depth + n.symbol + " " + n.caption +": " + n.time + "msec") ::: child
+  } 
   def draw(x:Int, y:Int)
   {
     // 描画するためにはすべてのノードの時間が計測済みでなければならないため

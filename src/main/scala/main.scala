@@ -7,6 +7,7 @@ import processing.core._
 import scala.util._
 
 import tm8st.util._
+import tm8st.layout._
 import tm8st.engine._
 import tm8st.aigoal._
 import tm8st.sims._
@@ -134,12 +135,13 @@ object SimsGame extends Game
   override val title = "Simsましまろ"
 
   // sizes
-  override protected val WindowSizeX = 800
+  override protected val WindowSizeX = 1280
   override protected val WindowSizeY = 680
   override protected val uiFontSize = 12
 
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
-  
+  private var debugGUILayout = new GridLayoutManager(WindowSizeX, WindowSizeY, 400, 220)
+
   // 
   override def setup(g:PApplet)
   {
@@ -188,11 +190,11 @@ object SimsGame extends Game
     val tsukkomiActions = List(tsukkomi, talk)
     val bisyoujoActions = List(dakitsuki, mitsumeru, talk)
     
-    // world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
-    // world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
+    world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
+    world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
     world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
     world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
-    // world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
+    world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
     
     //define objects
     world.addObject(new AObject("空間", Vector3(320, 320, 0), new Bounds(320.f), world, List(wordBoke)))
@@ -260,51 +262,6 @@ object SimsGame extends Game
 
       // ゲーム世界
       world.draw()
-      
-      // ヘッダ
-      {
-	app.textFont(uiFont)
-	GL.stroke(Color.Black)
-	GL.fill(Color.Black)
-	GL.text("time " + world.totalTime + "sec.", 32, WindowSizeY-32)
-	GL.text("processing millis " + Util.getCurrentMSec() + "msec.", 32, WindowSizeY-16)
-      }
-
-      world.draw()
-
-      // 存在リスト
-      {
-	GL.stroke(Color.Black)
-	GL.fill(Color.Black)
-	val sx = 300
-	val sy = 32
-
-	GL.text("Actors:" + world.getActors().map("\n" + _.name).reduceLeft(_ + _), sx, sy)
-
-	// var x = 0
-	// val oy = uiFontSize
-	// GL.text("Actors:", sx, sy)
-	// for(a <- world.getActors())
-	// {
-	//   GL.text(a.name, sx, sy + x * oy)
-	//   x += 1
-	// }
-      }
-      
-      // 人状態
-      {  
-	app.stroke(0);
-	app.fill(0)
-	var x = 0
-	val sx = 32
-	val ox = 140
-	val sy = 360
-	for(p <- world.getPersons())
-	  {
-	    GL.text(p.toString(), sx + x * ox, sy)
-	    x += 1
-	  }
-      }
 
       // 状態の重み関数グラフ
       {
@@ -317,11 +274,11 @@ object SimsGame extends Game
 	val sy = 80.f
 	val oy = 60.f
 	val scale = 0.2f
-	var y=0
+	var y = 0
 	for(p <- params)
 	  {
 	    app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
-	    app.stroke(224)
+	    app.stroke(192)
 	    GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
 	    GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
 	    
@@ -334,8 +291,36 @@ object SimsGame extends Game
       }
     }
 
+    // ヘッダ
+    debugGUILayout.addElement(
+      new LayoutElementString(
+	List("Time " + world.totalTime/1000.f + "sec.", "processing millis " + Util.getCurrentMSec() + "msec."),
+	uiFont, false)
+    )
     // プロファイラー描画
-    Profiler.draw(32, 32)
+    // Profiler.draw(32, 32)
+    // プロファイラー
+    debugGUILayout.addElement(
+      new LayoutElementString(
+	Profiler.getInfo(),
+	uiFont, false)
+    )
+    // 存在リスト
+    debugGUILayout.addElement(
+      new LayoutElementString(
+	List("Actors("+world.getActors().length+"):") ::: world.getActors().map(_.name),
+	uiFont, false)
+    )
+    // 人状態
+    world.getPersons().map(p =>
+      debugGUILayout.addElement(
+	new LayoutElementString(
+	  p.toString().lines.toList,
+	  uiFont, false)
+      ))
+
+    // デバッグGUI
+    debugGUILayout.drawElements()
   }
   //
   def selectActor(scrX:Int, scrY:Int):GameActor = 
