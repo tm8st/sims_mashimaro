@@ -140,7 +140,7 @@ object SimsGame extends Game
   override protected val uiFontSize = 12
 
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
-  private var debugGUILayout = new GridLayoutManager(WindowSizeX, WindowSizeY, 400, 220)
+  private var debugGUILayout = new GridLayoutManager(WindowSizeX, WindowSizeY, 400, 225)
 
   // 
   override def setup(g:PApplet)

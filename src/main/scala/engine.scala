@@ -278,7 +278,7 @@ abstract class Game
   protected val WindowSizeY = 800
   
   protected val uiFontSize = 12
-  protected val uiFontName = "SanSerif"
+  protected val uiFontName = "Osaka"
   protected var uiFont:GLFont = null
 
   protected var state = GameStop
@@ -310,7 +310,7 @@ abstract class Game
   //
   def exit()
   {
-    Logger.info("exit.")
+    Logger.info("request exit.")
     state = GameQuit
   }
 
@@ -339,6 +339,8 @@ abstract class MyApplet extends PApplet
     this.init()
     frame.pack()
     frame.setVisible(true)
+
+    Logger.info("initialized Applet ")
   }
 
   // 
@@ -346,6 +348,8 @@ abstract class MyApplet extends PApplet
   {
     game.setup(this)
     frameRate(needFrame)
+
+    Logger.info("need frame rate " + needFrame)
   }
 
   // 
@@ -375,6 +379,8 @@ abstract class MyApplet extends PApplet
 
     if(game.isQuit())
     {
+      Logger.info("exit")
+      
       noLoop()
       System.exit(0)
     }

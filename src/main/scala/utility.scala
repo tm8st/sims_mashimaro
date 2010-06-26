@@ -15,6 +15,7 @@ object Util
 {
   def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
+
   def remap(x:Float, min:Float, max:Float):Float = 
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
 
@@ -75,151 +76,63 @@ object Logger
   val LogInfo = 1
   val LogDebug = 0
 
-  var currentLevel = LogWarning
+  var currentLevel = LogInfo
 
+  // 各種ログ出力
   def info(msg: => String)
   {
     if(LogInfo >= currentLevel)
-      println(msg)
+      log("Info", msg)
   }
   def debug(msg: => String)
   {
     if(LogDebug >= currentLevel)
-      println(msg)
+      log("Debug", msg)
   }
   def warning(msg: => String)
   {
     if(LogWarning >= currentLevel)
-      println(msg)
+      log("Warning", msg)
   }
   def error(msg: => String)
   {
     if(LogError >= currentLevel)
-      println(msg)
+      log("Error", msg)
+  }
+
+  private def log(prefix:String, msg:String)
+  {
+    println("<" + prefix + ">" + "[%5.5f".format(Util.getCurrentMSec()/1000.f) + "]" + msg)
   }
 }
 /* ------------------------------------------------------------
- !パフォーマンスプロファイラ
- !@memo 
+ !色型
+ !@memo
  ------------------------------------------------------------ */
-object Profiler
+object Color
 {
-  var isBeginFrame = true
-  var isActive = true
-  var nodeStack:Stack[Node] = new Stack
+  val Black = Color(0, 0, 0, 255)
+  val White = Color(255, 255, 255, 255)
+  val Red = Color(255, 0, 0, 255)
+  val Green = Color(0, 255, 0, 255)
+  val Blue = Color(0, 0, 255, 255)
+}
+/* ------------------------------------------------------------
+ !色型
+ !@memo
+ ------------------------------------------------------------ */
+case class Color(ar:Int, ag:Int, ab:Int, aa:Int)
+{
+  def this(v:Int) = this(v, v, v, v)
+  def this(ar:Int, ab:Int, ag:Int) = this(ar, ab, ag, 255)
 
-  // 
-  case class Node(val symbol:String, val caption:String, val color:Color)
-  {
-    var time:Float = Util.getCurrentMSec()
-    var childs:List[Node] = List()
+  def +(o:Color):Color = Color(r+o.r, g+o.g, b+o.b, a+o.a)
+  def -(o:Color):Color = Color(r-o.r, g-o.g, b-o.b, a-o.a)
 
-    def addChild(c:Node){ childs = c :: childs }
-  }
-
-  // 
-  def pushNode(n:Node) =
-  {
-    if(nodeStack.isEmpty == false)
-    {
-      Logger.debug("ProfilterNode: addChild " + " "+nodeStack.top.symbol+" to " + n.symbol)
-      nodeStack.top.addChild(n)
-    }
-    nodeStack.push(n)
-    n
-  }
-  // 
-  def popNode()
-  {
-    nodeStack.pop
-  }
-
-  // 
-  def auto(symbol:String, caption:String, c:Color)(block: => Unit)
-  {
-    if(isActive)
-    {
-      var n = pushNode(new Node(symbol, caption, c))
-      block
-      n.time = Util.getCurrentMSec() - n.time
-      popNode()
-    }
-    else
-    {
-      block
-    }
-  }
-
-  //
-  def beginFrame()
-  {
-    isBeginFrame = true
-    nodeStack.clear()
-    pushNode(new Node("Root", "", Color.Black))
-  }
-
-  //
-  def endFrame()
-  {
-    isBeginFrame = false
-    assert(nodeStack.length == 1)
-    if(nodeStack.top.time < 999.f)
-      nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
-  }
-
-  //
-  def getInfo():List[String] =
-  {
-    // 状態を確定するためにはすべてのノードの時間が計測済みでなければならないため
-    assert(nodeStack.length == 1)
-    
-    if(isBeginFrame)
-      {
-	nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
-      }
-    List("Profiler:") ::: getInfoNode(nodeStack.top, 0)
-  }
-  //
-  private def getInfoNode(n:Node, depth:Int):List[String] =
-  {
-    val space = "-"
-
-    val child:List[String] = n.childs.flatMap(getInfoNode(_, depth + 1))
-    List(space * depth + n.symbol + " " + n.caption +": " + n.time + "msec") ::: child
-  } 
-  def draw(x:Int, y:Int)
-  {
-    // 描画するためにはすべてのノードの時間が計測済みでなければならないため
-    assert(nodeStack.length == 1)
-  
-    if(isBeginFrame)
-    {
-      nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
-    }
-
-    GL.stroke(Color.Black)
-    GL.fill(Color.Black)
-
-    GL.text("Profiler:", x, y)
-    drawNode(nodeStack.top, x, y + 16, 0)
-  }
-  //
-  private def drawNode(n:Node, x:Int, y:Int, depth:Int)
-  {
-    // Logger.debug("Profilter: drawNode "+n.name+" childNum " + n.childs.length)
- 
-    GL.stroke(n.color)
-    GL.fill(n.color)
-
-    val space = "-"
-    
-    GL.text(space * depth + n.symbol + " " + n.caption +": " + n.time + "msec", x, y)
-    
-    for(c <- n.childs)
-    {
-      drawNode(c, x, y + 14 * (1 + n.childs.indexOf(c)), depth +1)
-    }
-  }
+  val r = Util.clamp(ar, 0, 255)
+  val g = Util.clamp(ag, 0, 255)
+  val b = Util.clamp(ab, 0, 255)
+  val a = Util.clamp(aa, 0, 255)
 }
 /* ------------------------------------------------------------
  !3要素ベクトル
@@ -272,35 +185,6 @@ case class Bounds(val boxExtent:Vector3, val radius:Float)
   {
       "Bounds boxExtent " + boxExtent + " radius" + radius
   }  
-}
-/* ------------------------------------------------------------
- !色型
- !@memo
- ------------------------------------------------------------ */
-object Color
-{
-  val Black = Color(0, 0, 0, 255)
-  val White = Color(255, 255, 255, 255)
-  val Red = Color(255, 0, 0, 255)
-  val Green = Color(0, 255, 0, 255)
-  val Blue = Color(0, 0, 255, 255)
-}
-/* ------------------------------------------------------------
- !色型
- !@memo
- ------------------------------------------------------------ */
-case class Color(ar:Int, ag:Int, ab:Int, aa:Int)
-{
-  def this(v:Int) = this(v, v, v, v)
-  def this(ar:Int, ab:Int, ag:Int) = this(ar, ab, ag, 255)
-
-  def +(o:Color):Color = Color(r+o.r, g+o.g, b+o.b, a+o.a)
-  def -(o:Color):Color = Color(r-o.r, g-o.g, b-o.b, a-o.a)
-
-  val r = Util.clamp(ar, 0, 255)
-  val g = Util.clamp(ag, 0, 255)
-  val b = Util.clamp(ab, 0, 255)
-  val a = Util.clamp(aa, 0, 255)
 }
 /* ------------------------------------------------------------
    !スプライン補間

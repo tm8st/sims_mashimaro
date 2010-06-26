@@ -272,12 +272,15 @@ class TestAIGoal
     }
   }
 
-  // !Test code
-  val pawn = new TestGameActor("testPawn")
-  val ai = new AIGoalRoot(pawn)
+  def main(args: Array[String])
+  {
+    // !Test code
+    val pawn = new TestGameActor("testPawn")
+    val ai = new AIGoalRoot(pawn)
 
-  ai.activate()
+    ai.activate()
 
-  for(i <- 0 to 300)
-    ai.tick(1.f)
+    for(i <- 0 to 300)
+      ai.tick(1.f)
+  }
 }
