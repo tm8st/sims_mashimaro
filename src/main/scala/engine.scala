@@ -96,10 +96,10 @@ abstract class Primitive extends GameObject with Movable with Drawable
  !プリミティブコンポーネント
  !@memo
  ------------------------------------------------------------ */
-class CPrimitive extends GameObject with Movable with Drawable
+abstract class CPrimitive extends GameObject with Movable with Drawable
 {
   var owner:GameActor = null
-  var translation = new Vector3(0.f)
+  def translation:Vector3
   def pos = if(owner != null) owner.pos + translation else translation
   var bounds = new Bounds(0.f)
   var world:World = null
@@ -108,7 +108,7 @@ class CPrimitive extends GameObject with Movable with Drawable
  !形状プリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CShapePrimitive extends CPrimitive
+abstract class CShapePrimitive extends CPrimitive
 {
   var strokeColor = new Color(0, 0, 0, 255)
   var fillColor = new Color(0, 0, 0, 255)
@@ -129,7 +129,7 @@ class CShapePrimitive extends CPrimitive
  !矩形プリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CBoxPrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CBoxPrimitive(var translation:Vector3, bounds:Bounds) extends CShapePrimitive
 {
   // 
   override def draw()
@@ -143,7 +143,7 @@ class CBoxPrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimitive
  !球プリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CSpherePrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CSpherePrimitive(var translation:Vector3, bounds:Bounds) extends CShapePrimitive
 {
   // 
   override def draw()
@@ -156,7 +156,7 @@ class CSpherePrimitive(translation:Vector3, bounds:Bounds) extends CShapePrimiti
  !ラベルプリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CLabelPrimitive(var caption:String, translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CLabelPrimitive(var caption:String, var translation:Vector3, bounds:Bounds) extends CShapePrimitive
 {
   isFillShape = true
 

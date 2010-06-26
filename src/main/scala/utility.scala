@@ -64,6 +64,10 @@ class GLFont(val size:Int, val faceName:String)
 
   val handle = GL.g.createFont(faceName, height)
 }
+object Name extends Enumeration
+{
+  def NameGame = Value
+}
 /* ------------------------------------------------------------
  !ログ出力管理
  !@memo 
@@ -75,7 +79,7 @@ object Logger
   val LogWarning = 2
   val LogInfo = 1
   val LogDebug = 0
-
+  
   var currentLevel = LogInfo
 
   // 各種ログ出力
@@ -138,6 +142,10 @@ case class Color(ar:Int, ag:Int, ab:Int, aa:Int)
  !3要素ベクトル
  !@memo
  ------------------------------------------------------------ */
+object Vector3
+{
+  val Zero:Vector3 = Vector3(0.f, 0.f, 0.f)
+}
 case class Vector3(aX:Float, aY:Float, aZ:Float)
 {
   val X = aX

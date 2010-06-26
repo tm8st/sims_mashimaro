@@ -26,11 +26,26 @@ object Action
   val ChannelAll = 0xff
 }
 /* ------------------------------------------------------------
- !行動データ
+ !行動クラス
  !@memo
  ------------------------------------------------------------ */
-class Action(val name:String, val effect:PersonState, val channel:Int)
+class Action(val name:String, val effect:PersonState, val channel:Int, val time:Float)
 {
+  def this(name:String, effect:PersonState, channel:Int) = this(name, effect, channel, 1.f)
+  
+  // //
+  // def begin(person:APerson, actionTargets:Seq[ActionTarget])
+  // {
+  // }
+  // //
+  // def tick(person:APerson, actionTargets:Seq[ActionTarget])
+  // {
+  // }
+  // //
+  // def end(person:APerson, actionTargets:Seq[ActionTarget])
+  // {
+  // }
+  
   // 
   def canDo(person:APerson):Boolean = (channel & person.actionChannel) > 0
 

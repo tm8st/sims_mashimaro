@@ -37,8 +37,8 @@ class AObject(val objectName:String, var pos:Vector3, var bounds:Bounds, val wor
   override def gameObjectName = "AObject"
   override def name = gameObjectName + ":" + objectName
 
-  addPrimitive(new CBoxPrimitive(new Vector3(0.f), bounds))
-  val label = new CLabelPrimitive(objectName, new Vector3(0.f), bounds)
+  addPrimitive(new CBoxPrimitive(Vector3.Zero, bounds))
+  val label = new CLabelPrimitive(objectName, Vector3.Zero, bounds)
   {
     fillColor = new Color(128, 128, 255)
   }
@@ -53,16 +53,16 @@ class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameA
   override def gameObjectName = "ASerif"
   override def name = gameObjectName + ":" + caption
 
-  var bounds = Bounds(new Vector3(14 * caption.length, 12, 0.f), 12.f)
+  var bounds = Bounds(new Vector3(caption.length * 12 / 2, 12, 0.f), 12.f)
   var timer = 120
 
   // primitives
-  val box = new CBoxPrimitive(pos, bounds)
+  val box = new CBoxPrimitive(Vector3.Zero, bounds)
   {
     strokeColor = new Color(0, 0, 32, 120)
   }
   addPrimitive(box)
-  val label = new CLabelPrimitive(caption, pos, bounds)
+  val label = new CLabelPrimitive(caption, Vector3(-32.f, 0.f, 0.f), bounds)
   {
     strokeColor = new Color(0, 0, 32, 120)
   }

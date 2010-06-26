@@ -16,6 +16,10 @@ import tm8st.aigoal._
  ------------------------------------------------------------ */
 object PersonState
 {
+  // パラメータの値域
+  val paramMin = -100.f
+  val paramMax = 100.f
+
   // カーブ設定
   val splineHunger = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.3f)))
   val splineBladder = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (1.f, 0.3f)))
@@ -24,19 +28,18 @@ object PersonState
   val splineSocial = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
   val splineHp = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (0.5f, 0.0f), (1.f, 0.0f)))
 
-  // パラメータの値域
-  val paramMin = -100.f
-  val paramMax = 100.f
-  
   // 重み計算
-  def calcHungerWeight(x:Float) = PersonState.splineHunger.map(Util.remap(x, paramMin, paramMax))
-  def calcBladderWeight(x:Float) = PersonState.splineBladder.map(Util.remap(x, paramMin, paramMax))
-  def calcBokeWeight(x:Float) = PersonState.splineBoke.map(Util.remap(x, paramMin, paramMax))
-  def calcTsukkomiWeight(x:Float) = PersonState.splineTsukkomi.map(Util.remap(x, paramMin, paramMax))
-  def calcSocialWeight(x:Float) = PersonState.splineSocial.map(Util.remap(x, paramMin, paramMax))
-  def calcHpWeight(x:Float) = PersonState.splineHp.map(Util.remap(x, paramMin, paramMax))
+  def calcWeight(x:Float, curve:Spline) = curve.map(Util.remap(x, paramMin, paramMax))
 
-  //
+  // 
+  def calcHungerWeight(x:Float) = calcWeight(x, PersonState.splineHunger)
+  def calcBladderWeight(x:Float) = calcWeight(x, PersonState.splineBladder)
+  def calcBokeWeight(x:Float) = calcWeight(x, PersonState.splineBoke)
+  def calcTsukkomiWeight(x:Float) = calcWeight(x, PersonState.splineTsukkomi)
+  def calcSocialWeight(x:Float) = calcWeight(x, PersonState.splineSocial)
+  def calcHpWeight(x:Float) = calcWeight(x, PersonState.splineHp)
+
+  // 
   def getParamDeclares() = 
   {
     List[(String, Float=>Float)](
@@ -44,7 +47,7 @@ object PersonState
       ("便意", calcBladderWeight),
       ("ボケ", calcBokeWeight),
       ("ツッコミ", calcTsukkomiWeight),
-      ("楽しさ", calcSocialWeight),
+      ("人恋しさ", calcSocialWeight),
       ("体力", calcHpWeight),
        )
   }
@@ -54,7 +57,9 @@ object PersonState
  !@memo
  ------------------------------------------------------------ */
 case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aSocial:Float, aHp:Float)
-{  
+{
+  // 状態変数
+  //??? val states = List(aHunger, aBladder, aBoke, aTsukkomi, aSocial, aHp)
   val hunger = Util.clamp(aHunger, PersonState.paramMin, PersonState.paramMax)
   val bladder = Util.clamp(aBladder, PersonState.paramMin, PersonState.paramMax)
   val boke = Util.clamp(aBoke, PersonState.paramMin, PersonState.paramMax)
@@ -84,7 +89,12 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
   //
   override def toString =
   {
-    "PersonState:\n hunger " + hunger + "\n bladder " + bladder + "\n boke " + boke + "\n tsukkomi " + tsukkomi + "\n social " + social + "\n hp " + hp
+    "PersonState:\n hunger " + hunger +
+    "\n bladder " + bladder +
+    "\n boke " + boke +
+    "\n tsukkomi " + tsukkomi +
+    "\n social " + social +
+    "\n hp " + hp
   }
 }
 /* ------------------------------------------------------------
@@ -96,10 +106,25 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   override def gameObjectName = "APerson"
   override def name = gameObjectName + ":" + personName
 
-  var state = PersonState(0.f, 0.f, 100.f, 100.f, 0.f, 100.f)
+  // Primitives
   var bounds = new Bounds(16.f)
-  var walkSpeed = 50.f
-  var mode = state.calcMode()
+  val sphere = new CSpherePrimitive(Vector3.Zero, bounds)
+  {
+    strokeColor = new Color(128, 98, 98)
+    setDrawPriority(1)
+  }
+  addPrimitive(sphere)
+
+  val label = new CLabelPrimitive(personName, Vector3.Zero, bounds)
+  {
+    fillColor = new Color(0, 0, 32)
+    setDrawPriority(1)
+  }
+  addPrimitive(label)
+
+  var state = PersonState(0.f, 0.f, 100.f, 100.f, 0.f, 100.f)
+  private var walkSpeed = 50.f
+  private var mode = state.calcMode()
 
   // Action variable
   var actionCounter = 0.f
@@ -109,21 +134,6 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   // AI Root
   val aiRoot = new PGRoot(this)
   aiRoot.activate()
-
-  // Primitives
-  val sphere = new CSpherePrimitive(pos, bounds)
-  {
-    strokeColor = new Color(128, 98, 98)
-    setDrawPriority(1)
-  }
-  addPrimitive(sphere)
-
-  val label = new CLabelPrimitive(personName, pos, bounds)
-  {
-    fillColor = new Color(0, 0, 32)
-    setDrawPriority(1)
-  }
-  addPrimitive(label)
 
   // 
   override def tick(delta:Float)
@@ -135,13 +145,13 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
       if(currentAction != null)
 	{
 	  actionCounter += delta
-	  if(actionCounter > 2.f)
+	  if(actionCounter > currentAction.time)
       	    {
       	      Logger.debug(name + " Run Action " + currentAction.name)
-
+	      
       	      currentAction.Run(this)
-      	      world.addActor(new ASerif(currentAction.name, pos, world))
-
+      	      world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
+	      
       	      actionCounter = 0.f
       	      currentAction = null
       	      currentActionTarget = null
@@ -150,7 +160,6 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
       
       aiRoot.tick(delta)
       
-      // State
       state = state.update(delta)
     }
   }
@@ -163,15 +172,14 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
     actionCounter = 0.f
     currentAction = action
     currentActionTarget = actionTarget
-    
-    // action.Run(this)
-    // world.addActor(new ASerif(action.name, pos, world))
   }
   // 
   def isActionEnd() = currentAction == null
   // 
-  def isCanAction(actionTarget:ActionTarget, action:Action) =
+  def isCanAction(actionTarget:ActionTarget, action:Action):Boolean =
   {
+    if(action.canDo(this) == false) return false
+
     val dif = actionTarget.pos - pos;
     dif.size < (bounds.radius + actionTarget.bounds.radius)
   }
@@ -184,7 +192,6 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
     if(dif.size > (bounds.radius + actionTarget.bounds.radius))
       pos = pos + dif.normal() * walkSpeed * world.deltaTime
   }
-
   // 
   def ChangeState(effect:PersonState)
   {
@@ -194,8 +201,6 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   // 
   override def toString() =
   {
-    // var act = if(nextAction!= null) nextAction.name else "null"
-    // act = " NextAction " + act + "\n"
     "APerson:" + personName + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
   }
 }
