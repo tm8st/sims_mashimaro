@@ -284,3 +284,4 @@ class TestAIGoal
       ai.tick(1.f)
   }
 }
+
