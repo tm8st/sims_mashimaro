@@ -21,6 +21,13 @@ trait SimsActor extends GameActor
   def simsWorld():SimsWorld = world.asInstanceOf[SimsWorld]
 }
 /* ------------------------------------------------------------
+ !actionable actor
+ !@memo
+ ------------------------------------------------------------ */
+trait AActor extends SimsActor
+{
+}
+/* ------------------------------------------------------------
  !行動の対象アクタ
  !@memo
  ------------------------------------------------------------ */
@@ -38,7 +45,7 @@ class AObject(val objectName:String, var pos:Vector3, var bounds:Bounds, val wor
   override def name = gameObjectName + ":" + objectName
 
   addPrimitive(new CBoxPrimitive(Vector3.Zero, bounds))
-  val label = new CLabelPrimitive(objectName, Vector3.Zero, bounds)
+  val label = new CLabelPrimitive(objectName, Vector3.Zero, bounds, SimsGame.getFont(0))
   {
     fillColor = new Color(128, 128, 255)
   }
@@ -62,7 +69,7 @@ class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameA
     strokeColor = new Color(0, 0, 32, 120)
   }
   addPrimitive(box)
-  val label = new CLabelPrimitive(caption, Vector3(-32.f, 0.f, 0.f), bounds)
+  val label = new CLabelPrimitive(caption, Vector3.Zero, bounds, SimsGame.getFont(0))
   {
     strokeColor = new Color(0, 0, 32, 120)
   }
@@ -139,8 +146,10 @@ object SimsGame extends Game
   override protected val WindowSizeY = 680
   override protected val uiFontSize = 12
 
+  def getFont(id:Int) = uiFont
+  
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
-  private var debugGUILayout = new GridLayoutManager(WindowSizeX, WindowSizeY, 400, 225)
+  private var debugGUILayout = new GridLayoutManager(WindowSizeX, WindowSizeY, WindowSizeX/3, WindowSizeY/3)
 
   // 
   override def setup(g:PApplet)
@@ -158,12 +167,6 @@ object SimsGame extends Game
     world = new SimsWorld(WindowSizeX, WindowSizeY)
 
     //define actions
-    // case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aSocial:Float, aHp:Float)
-    // val ChannelBoke = 0x01
-    // val ChannelTsukkomi = 0x02
-    // val ChannelBisyoujo = 0x04
-    // val ChannelMatsuri = 0x08
-
     val eat = new Action("食べる", PersonState(30.0f, 0.f, 0.f, 0.f, 0.f, -10.f), Action.ChannelUsual)
     val eatSnack = new Action("軽く食べる", PersonState(5.0f, -1.f, 0.f, 0.f, 0.f, -5.f), Action.ChannelUsual)
     val drink = new Action("飲む", PersonState(10.0f, -3.f, 0.f, 0.f, 0.f, -5.f), Action.ChannelUsual)
@@ -190,10 +193,10 @@ object SimsGame extends Game
     val tsukkomiActions = List(tsukkomi, talk)
     val bisyoujoActions = List(dakitsuki, mitsumeru, talk)
     
-    world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
-    world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
-    world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
-    world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
+    // world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
+    // world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
+    // world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
+    // world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
     world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
     
     //define objects
@@ -297,8 +300,6 @@ object SimsGame extends Game
 	List("Time " + world.totalTime/1000.f + "sec.", "processing millis " + Util.getCurrentMSec() + "msec."),
 	uiFont, false)
     )
-    // プロファイラー描画
-    // Profiler.draw(32, 32)
     // プロファイラー
     debugGUILayout.addElement(
       new LayoutElementString(

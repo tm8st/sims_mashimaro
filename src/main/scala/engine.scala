@@ -156,15 +156,17 @@ class CSpherePrimitive(var translation:Vector3, bounds:Bounds) extends CShapePri
  !ラベルプリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CLabelPrimitive(var caption:String, var translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CLabelPrimitive(var caption:String, var translation:Vector3, bounds:Bounds, var font:GLFont) extends CShapePrimitive
 {
   isFillShape = true
+  var isCentering = true
 
   // 
   override def draw()
   {
     super.draw()
-    GL.text(caption, pos.X, pos.Y)
+    val centeringOffset = if(isCentering) bounds.boxExtent.X else 0.f
+    GL.text(caption, pos.X - centeringOffset, pos.Y, font)
   }
 }
 /* ------------------------------------------------------------

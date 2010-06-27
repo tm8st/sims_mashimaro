@@ -101,7 +101,7 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
  !人物アクタ
  !@memo
  ------------------------------------------------------------ */
-class APerson(val personName:String, var pos:Vector3, val world:World, val actions:List[Action], var actionChannel:Int) extends ActionTarget
+class APerson(val personName:String, var pos:Vector3, val world:World, val actions:List[Action], var actionChannel:Int) extends ActionTarget with AActor
 {
   override def gameObjectName = "APerson"
   override def name = gameObjectName + ":" + personName
@@ -115,7 +115,7 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   }
   addPrimitive(sphere)
 
-  val label = new CLabelPrimitive(personName, Vector3.Zero, bounds)
+  val label = new CLabelPrimitive(personName, Vector3.Zero, bounds, SimsGame.getFont(0))
   {
     fillColor = new Color(0, 0, 32)
     setDrawPriority(1)
@@ -205,12 +205,12 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
   }
 }
 /* ------------------------------------------------------------
-   !ルートGoal
+   !ルートGoalAI
    !@memo
 ------------------------------------------------------------ */
 class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 {
-  override def name() = "AIRoot:"
+  override def name() = "AIRoot"
 
   // 
   override def activate()
@@ -370,7 +370,6 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
     if(getOwner.isCanAction(actionTarget, action))
     {
       getOwner.startAction(actionTarget, action)
-
       setActive()
     }
     else
@@ -391,4 +390,21 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
       setFinished()
     }
   }
+}
+/* ------------------------------------------------------------
+   !感想Enum
+   !@memo
+------------------------------------------------------------ */
+object Feedback extends Enumeration
+{
+  val Fun, Sad, Good, NotBad, Bad, TooBad = Value
+}
+/* ------------------------------------------------------------
+ !記憶クラス
+ !@memo 見た事、聞いた事、やった事、感じた事などの記憶
+ ------------------------------------------------------------ */
+class Memory(val time:Float, val place:Vector3, val targetActor:AActor,
+	     val targetActor:ActionTarget, val feedback:Feedback.Value, var strength:Float)
+{
+  
 }

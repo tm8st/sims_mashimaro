@@ -36,8 +36,8 @@ abstract trait LayoutElement
 class LayoutElementString(val strs:List[String], val font:GLFont, bEnableScaling:Boolean)
   extends LayoutElement
 {
-  val sizeX = Util.getMaxLineLength(strs) * font.width.toFloat
-  val sizeY = Util.getLineNum(strs) * font.height.toFloat
+  val sizeX = Util.getMaxLineLength(strs) * font.width.toFloat + 10.f
+  val sizeY = Util.getLineNum(strs) * font.height.toFloat + 10.f
   def isEnableScaling = bEnableScaling
   def isDrawRect = true
 
@@ -50,7 +50,7 @@ class LayoutElementString(val strs:List[String], val font:GLFont, bEnableScaling
     GL.stroke(textColor)
     GL.fill(textColor)
     for(s <- strs)
-      GL.text(s, x, y + font.height * strs.indexOf(s), font)
+      GL.text(s, x + 1.f, y + 8.f + font.height * strs.indexOf(s), font)
   }
 }
 /* ------------------------------------------------------------

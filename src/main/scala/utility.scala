@@ -50,7 +50,7 @@ object GL
   def text(s:String, x:Float, y:Float, font:GLFont)
   {
     g.textFont(font.handle)
-    g.text(s, x + font.width/2, y + font.height)
+    g.text(s, x + font.width/2, y + font.height/2)
   }
 }
 /* ------------------------------------------------------------
@@ -59,7 +59,7 @@ object GL
 ------------------------------------------------------------ */
 class GLFont(val size:Int, val faceName:String)
 {
-  val width = size * 0.65f
+  val width = size * 0.62f
   val height = size
 
   val handle = GL.g.createFont(faceName, height)
