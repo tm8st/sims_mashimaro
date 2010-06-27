@@ -59,3 +59,4 @@ class Action(val name:String, val effect:PersonState, val channel:Int, val time:
     aActor.ChangeState(effect)
   }
 }
+
