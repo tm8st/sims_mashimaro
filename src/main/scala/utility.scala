@@ -13,6 +13,9 @@ import processing.core._
  ------------------------------------------------------------ */
 object Util
 {
+  val rand = new Random
+  def fRand() = rand.nextFloat()
+
   def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
 
@@ -80,6 +83,7 @@ object Logger
   val LogInfo = 1
   val LogDebug = 0
   
+  // var currentLevel = LogDebug
   var currentLevel = LogInfo
 
   // 各種ログ出力

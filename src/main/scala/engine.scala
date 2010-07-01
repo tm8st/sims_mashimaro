@@ -221,6 +221,7 @@ class World(aW:Int, aH:Int)
 
   var deltaTime = 0.f
   var totalTime = 0.f
+  def currentTime = totalTime
 
   private var actors:List[GameActor] = List()
   private var drawables:List[Drawable] = List()

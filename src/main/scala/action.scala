@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------
- !Sims Action
+ !Sims Action.
  ------------------------------------------------------------ */
 package tm8st.sims
 
@@ -32,6 +32,8 @@ object Action
 class Action(val name:String, val effect:PersonState, val channel:Int, val time:Float)
 {
   def this(name:String, effect:PersonState, channel:Int) = this(name, effect, channel, 1.f)
+
+  override def toString() = name
   
   // //
   // def begin(person:APerson, actionTargets:Seq[ActionTarget])

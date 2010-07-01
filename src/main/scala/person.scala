@@ -101,7 +101,14 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
  !人物アクタ
  !@memo
  ------------------------------------------------------------ */
-class APerson(val personName:String, var pos:Vector3, val world:World, val actions:List[Action], var actionChannel:Int) extends ActionTarget with AActor
+object APerson
+{
+  val ShortMemoryMaxLength = 5
+  val ShallowMemoryMaxLength = 5
+  val DeepMemoryMaxLength = 10
+}
+class APerson(val personName:String, var pos:Vector3, val world:World,
+              val actions:List[Action], var actionChannel:Int) extends ActionTarget with AActor with MemoryOwner
 {
   override def gameObjectName = "APerson"
   override def name = gameObjectName + ":" + personName
@@ -143,20 +150,24 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
       super.tick(delta)
 
       if(currentAction != null)
-	{
-	  actionCounter += delta
-	  if(actionCounter > currentAction.time)
-      	    {
-      	      Logger.debug(name + " Run Action " + currentAction.name)
-	      
-      	      currentAction.Run(this)
-      	      world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
-	      
-      	      actionCounter = 0.f
-      	      currentAction = null
-      	      currentActionTarget = null
-      	    }
-	}
+	    {
+	      actionCounter += delta
+	      if(actionCounter > currentAction.time)
+          {
+            Logger.debug(name + " Run Action " + currentAction.name)  
+
+            currentAction.Run(this)
+            world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
+
+            addMemory(
+              new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f)
+            )
+
+            actionCounter = 0.f
+            currentAction = null
+            currentActionTarget = null
+          }
+	    }
       
       aiRoot.tick(delta)
       
@@ -198,11 +209,18 @@ class APerson(val personName:String, var pos:Vector3, val world:World, val actio
     state = state.affect(effect)
   }
 
+  //
+  def getShortMemoryMaxLength() = APerson.ShortMemoryMaxLength
+  def getShallowMemoryMaxLength() = APerson.ShallowMemoryMaxLength
+  def getDeepMemoryMaxLength() = APerson.DeepMemoryMaxLength
+
   // 
   override def toString() =
   {
     "APerson:" + personName + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
   }
+  // 
+  def toStringMemory() = name + "\n" + getInfo()
 }
 /* ------------------------------------------------------------
    !ルートGoalAI
@@ -390,21 +408,4 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
       setFinished()
     }
   }
-}
-/* ------------------------------------------------------------
-   !感想Enum
-   !@memo
------------------------------------------------------------- */
-object Feedback extends Enumeration
-{
-  val Fun, Sad, Good, NotBad, Bad, TooBad = Value
-}
-/* ------------------------------------------------------------
- !記憶クラス
- !@memo 見た事、聞いた事、やった事、感じた事などの記憶
- ------------------------------------------------------------ */
-class Memory(val time:Float, val place:Vector3, val targetActor:AActor,
-	     val targetActor:ActionTarget, val feedback:Feedback.Value, var strength:Float)
-{
-  
 }

@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------
  !gui layout lib.
  ------------------------------------------------------------ */
-package tm8st.layout
+package tm8st.util.layout
 
 import scala.util._
 

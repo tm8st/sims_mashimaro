@@ -7,13 +7,14 @@ import processing.core._
 import scala.util._
 
 import tm8st.util._
-import tm8st.layout._
+import tm8st.util.layout._
 import tm8st.engine._
 import tm8st.aigoal._
 import tm8st.sims._
+import tm8st.util.chararec._
 
 /* ------------------------------------------------------------
- !行動の対象
+ !sims base actor.
  !@memo
  ------------------------------------------------------------ */
 trait SimsActor extends GameActor
@@ -21,7 +22,7 @@ trait SimsActor extends GameActor
   def simsWorld():SimsWorld = world.asInstanceOf[SimsWorld]
 }
 /* ------------------------------------------------------------
- !actionable actor
+ !行動するアクタ
  !@memo
  ------------------------------------------------------------ */
 trait AActor extends SimsActor
@@ -146,6 +147,8 @@ object SimsGame extends Game
   override protected val WindowSizeY = 680
   override protected val uiFontSize = 12
 
+  val charRecog = new CharacterRecognition()
+
   def getFont(id:Int) = uiFont
   
   private var world = new SimsWorld(WindowSizeX, WindowSizeY)
@@ -155,8 +158,6 @@ object SimsGame extends Game
   override def setup(g:PApplet)
   {
     super.setup(g)
-
-    // Logger.currentLevel = Logger.LogDebug
   }
 
   //
@@ -297,27 +298,34 @@ object SimsGame extends Game
     // ヘッダ
     debugGUILayout.addElement(
       new LayoutElementString(
-	List("Time " + world.totalTime/1000.f + "sec.", "processing millis " + Util.getCurrentMSec() + "msec."),
-	uiFont, false)
+	      List("Time " + world.totalTime + "sec.", "processing millis " + Util.getCurrentMSec() + "msec."),
+	      uiFont, false)
     )
     // プロファイラー
     debugGUILayout.addElement(
       new LayoutElementString(
-	Profiler.getInfo(),
-	uiFont, false)
+	      Profiler.getInfo(),
+	      uiFont, false)
     )
     // 存在リスト
     debugGUILayout.addElement(
       new LayoutElementString(
-	List("Actors("+world.getActors().length+"):") ::: world.getActors().map(_.name),
-	uiFont, false)
+	      List("Actors("+world.getActors().length+"):") ::: world.getActors().map(_.name),
+	      uiFont, false)
     )
     // 人状態
     world.getPersons().map(p =>
       debugGUILayout.addElement(
-	new LayoutElementString(
-	  p.toString().lines.toList,
-	  uiFont, false)
+	      new LayoutElementString(
+	        p.toString().lines.toList,
+	        uiFont, false)
+      ))
+    // 人記憶
+    world.getPersons().map(p =>
+      debugGUILayout.addElement(
+	      new LayoutElementString(
+	        p.toStringMemory().lines.toList,
+	        uiFont, false)
       ))
 
     // デバッグGUI
