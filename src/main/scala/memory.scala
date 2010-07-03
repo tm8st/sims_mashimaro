@@ -60,21 +60,21 @@ abstract trait MemoryOwner
   //
   def addMemory(m:Memory)
   {
-    shortMemorys += m
+    shortMemorys ::= m
 
     if(shortMemorys.length > getShortMemoryMaxLength())
     {
       val maxStrength = shortMemorys.reduceLeft((a, b) => if(a.strength > b.strength) a else b)
         
       shortMemorys -= maxStrength
-      shallowMemorys += maxStrength
+      shallowMemorys ::= maxStrength
         
       if(shallowMemorys.length > getShallowMemoryMaxLength())
       {
         val maxStrength = shallowMemorys.reduceLeft((a, b) => if(a.strength > b.strength) a else b)
         
         shallowMemorys -= maxStrength
-        deepMemorys += maxStrength
+        deepMemorys ::= maxStrength
 
         if(deepMemorys.length > getDeepMemoryMaxLength())
         {

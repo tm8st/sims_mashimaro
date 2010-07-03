@@ -48,7 +48,7 @@ object PersonState
       ("ボケ", calcBokeWeight),
       ("ツッコミ", calcTsukkomiWeight),
       ("人恋しさ", calcSocialWeight),
-      ("体力", calcHpWeight),
+      ("体力", calcHpWeight)
        )
   }
 }
