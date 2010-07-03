@@ -33,6 +33,24 @@ object CharacterRecognition
       0,0,0,1,0,0,0
     ),
     List(
+      0,0,0,1,1,0,0,  //'2'
+      0,0,1,0,0,1,0,
+      0,0,1,0,0,1,0,
+      0,0,0,0,1,0,0,
+      0,0,0,1,0,0,0,
+      0,0,1,0,0,0,0,
+      0,0,1,1,1,1,0
+    ),
+    List(
+      0,0,0,1,1,0,0,  //'3'
+      0,0,1,0,0,1,0,
+      0,0,0,0,0,1,0,
+      0,0,0,1,1,0,0,
+      0,0,0,0,0,1,0,
+      0,0,1,0,0,1,0,
+      0,0,0,1,1,0,0
+    ),
+    List(
       0,0,0,0,0,0,1,  //'/'
       0,0,0,0,0,1,0,
       0,0,0,0,1,0,0,
@@ -50,6 +68,7 @@ object CharacterRecognition
 class CharacterRecognition
 {
   val Patterns = CharacterRecognition.SimplePatterns
+  val OutputNum = Patterns.length
   
   // input declare
   val InputWidth = 7
@@ -64,12 +83,11 @@ class CharacterRecognition
   val LearningSpeedScale = 1.2f
   val SigmoidSlope = 1.2f
 
-  def randomValue(i:Int, j:Int) = Util.fRand() - 0.5f
-  def zeroValue(i:Int, j:Int) = 0.f
-  def randomValue(i:Int) = Util.fRand() - 0.5f
-  def zeroValue(i:Int) = 0.f
-
-  val OutputNum = Patterns.length
+  // 配列の要素の初期化用関数
+  private def randomValue(i:Int, j:Int) = Util.fRand() - 0.5f
+  private def zeroValue(i:Int, j:Int) = 0.f
+  private def randomValue(i:Int) = Util.fRand() - 0.5f
+  private def zeroValue(i:Int) = 0.f
 
   //閾値と重みの初期設定
   var weight_in_hidden = Util.newMultiDimentionArray(randomValue, InputSize, HiddenNum)
@@ -79,10 +97,18 @@ class CharacterRecognition
   var hidden_out = Util.newArray(zeroValue, HiddenNum)
   var output = Util.newArray(zeroValue, OutputNum)
 
-  // init.
-  learning();
-
   // 
+  learning()
+
+  def recognition(ptn:Seq[Float]) =
+  {
+    val output = forwardNeuralNet(ptn.toArray)
+    val rec = output.reduceLeft((a, b) => if(a > b) a else b)
+
+    output.indexOf(rec)
+  }
+
+  // ネットワークの教育処理
   private def learning()
   {
     //教師信号の設定
@@ -92,7 +118,6 @@ class CharacterRecognition
     //外部サイクル
     for(outerLoopCnt <- 0 to OuterCycles)
     {
-      //外部二乗誤差
       var outerError = 0.f
 
       for(ptn <- 0 to Patterns.length-1)
@@ -101,14 +126,9 @@ class CharacterRecognition
         val sample_in = Patterns(ptn).toArray
         val teach = teach_array(ptn).toArray
 
-        //内部サイクル
         for(innerLoopCnt <- 0 to InnerCycles)
         {
-          //順方向演算
-          val output = forwardNeuralNet(sample_in)
-
-          //逆方向演算（バックプロパゲーション）
-          outerError += backwardNeuralNet(sample_in, teach, output)
+          outerError += backwardNeuralNet(sample_in, teach, forwardNeuralNet(sample_in))
         }
       }
 
@@ -118,13 +138,11 @@ class CharacterRecognition
     Logger.debug(forwardNeuralNet(Patterns(0).toArray).toList.toString)
    }
 
-   //順方向演算のメソッド
+   // 順方向演算
    private def forwardNeuralNet(input:Array[Float]) =
    {
-     var output = (for(t <- 0 to OutputNum) yield 0.f).toArray
-  
-      // 隠れ層出力の計算
-     var hidden = (for(t <- 0 to HiddenNum-1) yield 0.f).toArray
+     var output = Util.newArray(zeroValue, OutputNum-1)
+     var hidden = Util.newArray(zeroValue, HiddenNum-1)
 
      for(h <- 0 to HiddenNum-1)
      {
@@ -135,7 +153,7 @@ class CharacterRecognition
        hidden_out(h) = sigmoid(hidden(h))
      }
 
-     var out = (for(t <- 0 to Patterns.length-1) yield 0.f).toArray
+     var out = Util.newArray(zeroValue, Patterns.length-1)
      
      // 出力層出力の計算
      for(o <- 0 to Patterns.length-1)
@@ -150,11 +168,11 @@ class CharacterRecognition
      output
    }
 
-   //逆方向演算のメソッド
+   // 逆方向演算のメソッド
    private def backwardNeuralNet(sample_in:Array[Float], teach:Array[Float], output:Array[Float]):Float =
    {
-     var output_error = (for(t <- 0 to Patterns.length-1) yield 0.f).toArray
-     var hidden_error = (for(t <- 0 to HiddenNum-1) yield 0.f).toArray
+     var output_error = Util.newArray(zeroValue, OutputNum-1)
+     var hidden_error = Util.newArray(zeroValue, HiddenNum-1)
 
      // 出力層の誤差の計算
      for(k <- 0 to OutputNum-1)

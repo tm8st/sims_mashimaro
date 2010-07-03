@@ -78,6 +78,10 @@ class GLFont(val size:Int, val faceName:String)
 
   val handle = GL.g.createFont(faceName, height)
 }
+/* ------------------------------------------------------------
+   !
+   !@memo
+------------------------------------------------------------ */
 object Name extends Enumeration
 {
   def NameGame = Value
