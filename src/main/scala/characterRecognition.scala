@@ -62,6 +62,13 @@ object CharacterRecognition
   )
 }
 /* ------------------------------------------------------------
+   !
+   !@memo
+------------------------------------------------------------ */
+class CharacterRecognitionSetting(val patterns:List[List[Float]], val patternWidth:Int, val patternHeight:Int, val hiddenNum:Int)
+{
+}
+/* ------------------------------------------------------------
    !Character Recognition
    !@memo
 ------------------------------------------------------------ */
@@ -84,10 +91,10 @@ class CharacterRecognition
   val SigmoidSlope = 1.2f
 
   // 配列の要素の初期化用関数
-  private def randomValue(i:Int, j:Int) = Util.fRand() - 0.5f
-  private def zeroValue(i:Int, j:Int) = 0.f
-  private def randomValue(i:Int) = Util.fRand() - 0.5f
-  private def zeroValue(i:Int) = 0.f
+  private def randomValue(i:Int, j:Int):Float = Util.fRand() - 0.5f
+  private def zeroValue(i:Int, j:Int):Float = 0.f
+  private def randomValue(i:Int):Float = Util.fRand() - 0.5f
+  private def zeroValue(i:Int):Float = 0.f
 
   //閾値と重みの初期設定
   var weight_in_hidden = Util.newMultiDimentionArray(randomValue, InputSize, HiddenNum)
@@ -96,9 +103,6 @@ class CharacterRecognition
   var thresh_hidden = Util.newArray(randomValue, HiddenNum)
   var hidden_out = Util.newArray(zeroValue, HiddenNum)
   var output = Util.newArray(zeroValue, OutputNum)
-
-  // 
-  learning()
 
   def recognition(ptn:Seq[Float]) =
   {
@@ -109,7 +113,7 @@ class CharacterRecognition
   }
 
   // ネットワークの教育処理
-  private def learning()
+  private def learning(outerCycles:Int = 100, innerCycles:Int = 10, learningSpeedScale:Float = 1.2f, sigmoidSlope:Float = 1.2f)
   {
     //教師信号の設定
     def calcTeachValue(i:Int, j:Int) = if(j == i) 1.f else 0.f

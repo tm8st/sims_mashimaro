@@ -4,6 +4,7 @@
 package tm8st.aigoal
 
 import scala.util._
+import scala.math._
 import tm8st.util._
 
 /* ------------------------------------------------------------
@@ -34,10 +35,10 @@ abstract class AIGoal[TActor](aOwner:TActor)
   override def toString() = name() + " " + AIGoal.stateID2String(state)
   
   def getDepth():Int =
-  {
-    val d = if(parent != null) parent.getDepth() else 0
-    1 + d
-  }
+    {
+      val d = if(parent != null) parent.getDepth() else 0
+      1 + d
+    }
   
   type SelfType = AIGoal[TActor]
 
@@ -88,25 +89,25 @@ abstract class AIGoal[TActor](aOwner:TActor)
   private var state = AIGoal.STATE_INIT
 }
 /* ------------------------------------------------------------
- !複合ゴールAIの基底クラス
- !@memo
- ------------------------------------------------------------ */
+!複合ゴールAIの基底クラス
+!@memo
+------------------------------------------------------------ */
 abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
 {
   override def name() = "AIGoalComposite"
   override def toString() =
-  {
-    var offBase = getDepth()
-    var space = "-"
-    var ret = ""
-    for(g <- subGoals)
     {
-      ret += "\n" + space * offBase + g.toString()
-    }
-    super.toString() + ret
+      var offBase = getDepth()
+      var space = "-"
+      var ret = ""
+      for(g <- subGoals)
+        {
+          ret += "\n" + space * offBase + g.toString()
+        }
+      super.toString() + ret
 
-    // super.toString() + subGoals.filter(_.isActive()).map("\n " + _.toString())
-  }
+      // super.toString() + subGoals.filter(_.isActive()).map("\n " + _.toString())
+    }
 
   type BaseType = AIGoal[TActor]
 
@@ -121,7 +122,7 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
   {
     subGoal.terminate()
     subGoal.setParent(null)
-    subGoals -= subGoal
+    subGoals = subGoals.filterNot(_ == subGoal)
   }
   override def removeSubGoals()
   {
@@ -129,63 +130,63 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
     subGoals = List()
   }
   def tickSubGoals(delta:Float):Int =
-  {
-    // 終了したものを削除
-    val prevLen = subGoals.length
-    for(g <- subGoals)
-      if(g.isNeedsRemove)
-	removeSubGoal(g)
-    // subGoals = subGoals.filter(_.isNeedsRemove() == false)
-    // subGoals = subGoals.filter(_.isFinished() == false && _.isFailed() == false)
-    
-    // 更新
-    var ret = AIGoal.STATE_ACTIVE
-    if(subGoals.isEmpty == false)
     {
-      val hd = subGoals.head
-      if(prevLen != subGoals.length)
-	hd.activate()
+      // 終了したものを削除
+      val prevLen = subGoals.length
+      for(g <- subGoals)
+        if(g.isNeedsRemove)
+	        removeSubGoal(g)
+      // subGoals = subGoals.filter(_.isNeedsRemove() == false)
+      // subGoals = subGoals.filter(_.isFinished() == false && _.isFailed() == false)
+      
+      // 更新
+      var ret = AIGoal.STATE_ACTIVE
+      if(subGoals.isEmpty == false)
+        {
+          val hd = subGoals.head
+          if(prevLen != subGoals.length)
+	          hd.activate()
 
-      hd.tick(delta)
-      if(hd.isNeedsRemove() && subGoals.length == 1)
-	ret = AIGoal.STATE_FINISHED
-      else
-	ret = AIGoal.STATE_ACTIVE
-    }
-    else
-    {
-      ret = AIGoal.STATE_FINISHED
-    }
+          hd.tick(delta)
+          if(hd.isNeedsRemove() && subGoals.length == 1)
+	          ret = AIGoal.STATE_FINISHED
+          else
+	          ret = AIGoal.STATE_ACTIVE
+        }
+          else
+            {
+              ret = AIGoal.STATE_FINISHED
+            }
 
-    ret
-  }
+      ret
+    }
 };
 /* ------------------------------------------------------------
- !単純ゴールAIの基底クラス
- !@memo
- ------------------------------------------------------------ */
+!単純ゴールAIの基底クラス
+!@memo
+------------------------------------------------------------ */
 abstract class AIGoalAtomic[TActor](owner:TActor) extends AIGoal(owner)
 {
   override def name() = "AIGoalAtomic"
 }
 /* ------------------------------------------------------------
-   !テストコード
-   !@memo
+!テストコード
+!@memo
 ------------------------------------------------------------ */
 class TestAIGoal
 {
   /* ------------------------------------------------------------
-   !
-   !@memo
-   ------------------------------------------------------------ */
+  !
+  !@memo
+  ------------------------------------------------------------ */
   class TestGameActor(val name:String)
   {
     var tire = 0.f
   }
   /* ------------------------------------------------------------
-   !
-   !@memo
-   ------------------------------------------------------------ */
+  !
+  !@memo
+  ------------------------------------------------------------ */
   class AIGoalRoot(owner:TestGameActor) extends AIGoalComposite(owner)
   { 
     override def activate()
@@ -200,26 +201,26 @@ class TestAIGoal
 
       val ret = tickSubGoals(delta)
       if(ret == AIGoal.STATE_FINISHED)
-	{
-	  if(owner.tire < 10)
-	    {
-	      println("root: let's work.")
-	      addSubGoal(new AIGoalWork(owner))
-	    }
-	  else
-	    {
-	      println("root: let's sleep.")
-	      addSubGoal(new AIGoalSleep(owner))
-	    }
-	}
+	      {
+	        if(owner.tire < 10)
+	          {
+	            println("root: let's work.")
+	            addSubGoal(new AIGoalWork(owner))
+	          }
+	        else
+	          {
+	            println("root: let's sleep.")
+	            addSubGoal(new AIGoalSleep(owner))
+	          }
+	      }
       
       println("root: ...")
     }
   }
   /* ------------------------------------------------------------
-   !
-   !@memo
-   ------------------------------------------------------------ */
+  !
+  !@memo
+  ------------------------------------------------------------ */
   class AIGoalWork(owner:TestGameActor) extends AIGoalAtomic(owner)
   {
     var time = 10.f
@@ -239,16 +240,16 @@ class TestAIGoal
       owner.tire += 1.f * delta
       time -= delta
       if(time < 0.f)
-	{
-	  println("work: end ")
-	  setFinished()
-	}
+	      {
+	        println("work: end ")
+	        setFinished()
+	      }
     }
   }
   /* ------------------------------------------------------------
-   !眠る
-   !@memo
-   ------------------------------------------------------------ */
+  !眠る
+  !@memo
+  ------------------------------------------------------------ */
   class AIGoalSleep(owner:TestGameActor) extends AIGoalAtomic(owner)
   {
     var time = 3.f
@@ -265,13 +266,13 @@ class TestAIGoal
       super.tick(delta)
 
       println("sleep: ... " + time)
-      owner.tire = Math.max(owner.tire-1.f, 0.f)
+      owner.tire = max(owner.tire-1.f, 0.f)
       time -= delta
       if(time < 0.f)
-	{
-	  println("sleep: end ")
-	  setFinished()
-	}
+	      {
+	        println("sleep: end ")
+	        setFinished()
+	      }
     }
   }
 

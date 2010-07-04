@@ -17,15 +17,24 @@ object Util
   def fRand() = rand.nextFloat()
 
   // とりあえず2次元まで対応
-  def newArray[T](f: (Int) => T, n:Int) =
+  def newArray(f: Int => Float, n:Int):Array[Float] =
   {
     (for(i <- 0 to n) yield f(i)).toArray
   }
-  def newMultiDimentionArray[T](f: (Int,Int) => T, n:Int, m:Int) =
+  def newMultiDimentionArray(f: (Int,Int) => Float, n:Int, m:Int):Array[Array[Float]] =
   {
     (for(j <- 0 to m) yield
       (for(i <- 0 to n) yield f(i, j)).toArray).toArray
   }
+  // def newArray[T](f: Int => T, n:Int):Array[T] =
+  // {
+  //   (for(i <- 0 to n) yield f(i)).toArray
+  // }
+  // def newMultiDimentionArray[T](f: (Int,Int) => T, n:Int, m:Int):Array[Array[T]] =
+  // {
+  //   (for(j <- 0 to m) yield
+  //     (for(i <- 0 to n) yield f(i, j)).toArray).toArray
+  // }
 
   def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
   def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)

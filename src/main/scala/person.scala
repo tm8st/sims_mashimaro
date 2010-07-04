@@ -27,9 +27,10 @@ object PersonState
   val splineTsukkomi = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
   val splineSocial = new Spline(Array((-1.f, 1.f), (0.f, 1.f), (1.f, 1.f)))
   val splineHp = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (0.5f, 0.0f), (1.f, 0.0f)))
+  val splineTsukkomiMati = new Spline(Array((-1.f, 1.f), (0.f, 0.9f), (0.5f, 0.0f), (1.f, 0.0f)))
 
   // 重み計算
-  def calcWeight(x:Float, curve:Spline) = curve.map(Util.remap(x, paramMin, paramMax))
+  private def calcWeight(x:Float, curve:Spline) = curve.map(Util.remap(x, paramMin, paramMax))
 
   // 
   def calcHungerWeight(x:Float) = calcWeight(x, PersonState.splineHunger)
@@ -38,6 +39,7 @@ object PersonState
   def calcTsukkomiWeight(x:Float) = calcWeight(x, PersonState.splineTsukkomi)
   def calcSocialWeight(x:Float) = calcWeight(x, PersonState.splineSocial)
   def calcHpWeight(x:Float) = calcWeight(x, PersonState.splineHp)
+  def calcTsukkomiMatiWeight(x:Float) = calcWeight(x, PersonState.splineTsukkomiMati)
 
   // 
   def getParamDeclares() = 
@@ -48,7 +50,8 @@ object PersonState
       ("ボケ", calcBokeWeight),
       ("ツッコミ", calcTsukkomiWeight),
       ("人恋しさ", calcSocialWeight),
-      ("体力", calcHpWeight)
+      ("体力", calcHpWeight),
+      ("ツッコミ待ち", calcTsukkomiMatiWeight)
        )
   }
 }
@@ -56,25 +59,28 @@ object PersonState
  !人の肉体的、精神的状態
  !@memo
  ------------------------------------------------------------ */
-case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aSocial:Float, aHp:Float)
+case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aSocial:Float, aHp:Float, aTsukkomiMati:Float = 0.f)
 {
   // 状態変数
-  //??? val states = List(aHunger, aBladder, aBoke, aTsukkomi, aSocial, aHp)
+  // val states = List(aHunger, aBladder, aBoke, aTsukkomi,aSocial,
+  //                   aHp, aTsukkomiMati).map(Util.clamp(_, PersonState.paramMin, PersonState.paramMax))
   val hunger = Util.clamp(aHunger, PersonState.paramMin, PersonState.paramMax)
   val bladder = Util.clamp(aBladder, PersonState.paramMin, PersonState.paramMax)
   val boke = Util.clamp(aBoke, PersonState.paramMin, PersonState.paramMax)
   val tsukkomi = Util.clamp(aTsukkomi, PersonState.paramMin, PersonState.paramMax)
   val social = Util.clamp(aSocial, PersonState.paramMin, PersonState.paramMax)
   val hp = Util.clamp(aHp, PersonState.paramMin, PersonState.paramMax)
+  val tsukkomiMati = Util.clamp(aTsukkomiMati, PersonState.paramMin, PersonState.paramMax)
 
   // 
   def affect(r:PersonState):PersonState =
-    PersonState(hunger + r.hunger, bladder + r.bladder, boke + r.boke, tsukkomi + r.tsukkomi, social + r.social, hp + r.hp)
+    PersonState(hunger + r.hunger, bladder + r.bladder, boke + r.boke, tsukkomi + r.tsukkomi, social + r.social, hp + r.hp, tsukkomiMati + r.tsukkomiMati)
 
   // 
   def update(delta:Float) = 
-    new PersonState(hunger - 1.f * delta, bladder - 1.f * delta, boke - 0.f * delta, tsukkomi - 0.f * delta, social - 1.f * delta, hp + 1.f * delta)
-    // new PersonState(hunger - 0.001f * delta, bladder - 0.001f * delta, boke - 0.1f * delta, tsukkomi - 0.1f * delta, hp + 0.01f * delta)
+    new PersonState(hunger - 1.f * delta, bladder - 1.f * delta,
+                    boke - 0.f * delta, tsukkomi - 0.f * delta,
+                    social - 1.f * delta, hp + 1.f * delta, tsukkomiMati + 1.f * delta)
 
   //
   def calcMode():Float =
@@ -84,7 +90,8 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
     PersonState.calcBokeWeight(boke) * boke +
     PersonState.calcTsukkomiWeight(tsukkomi) * tsukkomi +
     PersonState.calcSocialWeight(social) * social +
-    PersonState.calcHpWeight(hp) * hp
+    PersonState.calcHpWeight(hp) * hp +
+    PersonState.calcTsukkomiMatiWeight(tsukkomiMati) * tsukkomiMati
   }
   //
   override def toString =
@@ -94,7 +101,8 @@ case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Flo
     "\n boke " + boke +
     "\n tsukkomi " + tsukkomi +
     "\n social " + social +
-    "\n hp " + hp
+    "\n hp " + hp + 
+    "\n tsukkomiMati " + tsukkomiMati
   }
 }
 /* ------------------------------------------------------------
@@ -157,11 +165,11 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
             Logger.debug(name + " Run Action " + currentAction.name)  
 
             currentAction.Run(this)
+
             world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
 
             addMemory(
-              new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f)
-            )
+              new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f))
 
             actionCounter = 0.f
             currentAction = null
