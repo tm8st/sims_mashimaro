@@ -23,7 +23,7 @@ object Profiler
   // 区間毎の時間計測用
   case class Node(val symbol:String, val caption:String, val color:Color)
   {
-    var time = Util.getCurrentMSec()
+    var time = Util.getCurrentNSec()
     var childs:List[Node] = List()
 
     def addChild(c:Node){ childs = c :: childs }
@@ -36,7 +36,7 @@ object Profiler
     {
       var n = pushNode(new Node(symbol, caption, c))
       block
-      n.time = Util.getCurrentMSec() - n.time
+      n.time = Util.getCurrentNSec() - n.time
       popNode()
     }
     else
@@ -79,7 +79,7 @@ object Profiler
     assert(nodeStack.length == 1)
 
     if(isBeginFrame)
-      nodeStack.top.time = Util.getCurrentMSec() - nodeStack.top.time
+      nodeStack.top.time = Util.getCurrentNSec() - nodeStack.top.time
 
     isBeginFrame = false
   }
@@ -96,6 +96,6 @@ object Profiler
   private def getInfoNode(n:Node, depth:Int):List[String] =
   {
     val child:List[String] = n.childs.flatMap(getInfoNode(_, depth + 1))
-    List(hierarchySpace * depth + n.symbol + " " + n.caption +": " + n.time + "msec") ::: child
+    List(hierarchySpace * depth + n.symbol + " " + n.caption +": " + n.time / 1000000.0 + "msec") ::: child
   }
 }

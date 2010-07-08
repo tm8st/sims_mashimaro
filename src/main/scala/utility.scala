@@ -44,6 +44,7 @@ object Util
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
 
   def getCurrentMSec() = GL.g.millis()
+  def getCurrentNSec() = System.nanoTime()
 
   def getMaxLineLength(strs:List[String]) =
   {

@@ -242,10 +242,10 @@ class World(aW:Int, aH:Int)
   def addDrawable(aDrawable:Drawable)
   {
     if(aDrawable.needsDrawableRegister())
-      {
-	aDrawable.setDrawableResistered(true)
-	drawables = aDrawable :: drawables
-      }
+    {
+	    aDrawable.setDrawableResistered(true)
+	    drawables = aDrawable :: drawables
+    }
   }
 
   // 
@@ -262,9 +262,11 @@ class World(aW:Int, aH:Int)
     }
   }
 
+  // 
   def draw()
   {
-    drawables = drawables.filter(_.isDestroy() == false).sort(_.getDrawPriority > _.getDrawPriority)
+    drawables = drawables.filter(_.isDestroy() == false)
+    drawables = drawables.sortWith(_.getDrawPriority > _.getDrawPriority)
     drawables.map(_.draw())
   }
 }
