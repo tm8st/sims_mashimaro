@@ -17,8 +17,17 @@ import tm8st.util.chararec._
  !sims base actor.
  !@memo
  ------------------------------------------------------------ */
-trait SimsActor extends GameActor
+trait SimsActor extends GameActor with Movable
 {
+  var pos:Vector3
+  var bounds:Bounds
+  
+  def move(dif:Vector3)
+  {
+    pos = pos + dif
+    bounds = new Bounds(bounds, pos)
+  }
+
   def simsWorld():SimsWorld = world.asInstanceOf[SimsWorld]
 }
 /* ------------------------------------------------------------
@@ -40,8 +49,9 @@ trait ActionTarget extends SimsActor
  !オブジェクトアクタ
  !@memo
  ------------------------------------------------------------ */
-class AObject(val objectName:String, var pos:Vector3, var bounds:Bounds, val world:World, val actions:List[Action]) extends ActionTarget
+class AObject(val objectName:String, var pos:Vector3, var radius:Float, val world:World, val actions:List[Action]) extends ActionTarget
 {
+  var bounds:Bounds = new Bounds(radius, pos)
   override def gameObjectName = "AObject"
   override def name = gameObjectName + ":" + objectName
 
@@ -56,12 +66,12 @@ class AObject(val objectName:String, var pos:Vector3, var bounds:Bounds, val wor
  !台詞アクタ
  !@memo
  ------------------------------------------------------------ */
-class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameActor
+class ASerif(val caption:String, var pos:Vector3, val world:World) extends SimsActor
 {
   override def gameObjectName = "ASerif"
   override def name = gameObjectName + ":" + caption
 
-  var bounds = Bounds(new Vector3(caption.length * 12 / 2, 12, 0.f), 12.f)
+  var bounds = Bounds(new Vector3(caption.length * 12 / 2, 12, 0.f), 12.f, pos)
   var timer = 120
 
   // primitives
@@ -87,9 +97,9 @@ class ASerif(val caption:String, var pos:Vector3, val world:World) extends GameA
     box.strokeColor -= Color(0, 0, 0, 1)
     timer -= 1
     if(timer < 0)
-    {
-      setDestroy()
-    }
+      {
+        setDestroy()
+      }
   }
 }
 /* ------------------------------------------------------------
@@ -175,14 +185,16 @@ object SimsGame extends Game
     val sit = new Action("座る", PersonState(0.f, 0.f, 0.f, 0.f, 0.f, 1.f), Action.ChannelUsual)
     val sleep = new Action("眠る", PersonState(-5.f, -5.f, -5.f, -5.f, 0.f, 50.f), Action.ChannelUsual)
     val push = new Action("押す", PersonState(-1.0f, 0.f, 5.f, 0.f, 0.f, -5.f), Action.ChannelBoke)
-    val wordBoke = new Action("一言ぼけ", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelBoke)
-    val tsukkomi = new Action("つっこみ", PersonState(0.f, 0.f, 0.f, 20.f, 5.f, -5.f), Action.ChannelTsukkomi)
     val dakitsuki = new Action("抱きつき", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val mitsumeru = new Action("見つめる", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val yomu = new Action("読む(絵本)", PersonState(0.f, 0.f, 5.f, 0.f, 0.f, -5.f), Action.ChannelMatsuri)
     val talk = new Action("話す", PersonState(0.f, 0.f, 0.f, 0.f, 10.f, -3.f), Action.ChannelUsual)
     val watchTV = new Action("見る", PersonState(0.f, 0.f, 0.f, 0.f, 1.f, -5.f), Action.ChannelUsual)
-    
+    val wordBoke = new Action("一言ぼけ", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f),
+                              PersonState(aTsukkomi = -30), Action.ChannelBoke, 160.f)
+    val tsukkomi = new Action("つっこみ", PersonState(0.f, 0.f, 0.f, 20.f, 5.f, -5.f),
+                              PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f), Action.ChannelTsukkomi, 160.f)
+
     //define persons
     val channelAna = Action.ChannelUsual | Action.ChannelTsukkomi
     val channelMiu = Action.ChannelUsual | Action.ChannelTsukkomi | Action.ChannelBoke
@@ -201,14 +213,14 @@ object SimsGame extends Game
     world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
     
     //define objects
-    world.addObject(new AObject("空間", Vector3(320, 320, 0), new Bounds(320.f), world, List(wordBoke)))
-    world.addObject(new AObject("ベッド", Vector3(64, 64, 0), new Bounds(64.f), world, List(push, sleep, sit)))
-    world.addObject(new AObject("トイレ", Vector3(32, 256, 0), new Bounds(32.f), world, List(push, toilet)))
-    world.addObject(new AObject("冷蔵庫", Vector3(420, 258, 0), new Bounds(24.f), world, List(push, eat, drink)))
-    world.addObject(new AObject("机", Vector3(196, 128, 0), new Bounds(24.f), world, List(sit, eatSnack, drink)))
-    world.addObject(new AObject("勉強机", Vector3(128, 256, 0), new Bounds(16.f), world, List(push)))
-    world.addObject(new AObject("絵本", Vector3(180, 256, 0), new Bounds(8.f), world, List(yomu)))
-    world.addObject(new AObject("テレビ", Vector3(320, 240, 0), new Bounds(12.f), world, List(wordBoke, watchTV)))
+    world.addObject(new AObject("空間", Vector3(320, 320, 0), 320.f, world, List(wordBoke)))
+    world.addObject(new AObject("ベッド", Vector3(64, 64, 0), 64.f, world, List(push, sleep, sit)))
+    world.addObject(new AObject("トイレ", Vector3(32, 256, 0), 32.f, world, List(push, toilet)))
+    world.addObject(new AObject("冷蔵庫", Vector3(420, 258, 0), 24.f, world, List(push, eat, drink)))
+    world.addObject(new AObject("机", Vector3(196, 128, 0), 24.f, world, List(sit, eatSnack, drink)))
+    world.addObject(new AObject("勉強机", Vector3(128, 256, 0), 16.f, world, List(push)))
+    world.addObject(new AObject("絵本", Vector3(180, 256, 0), 8.f, world, List(yomu)))
+    world.addObject(new AObject("テレビ", Vector3(320, 240, 0), 12.f, world, List(wordBoke, watchTV)))
   }
 
   // 
@@ -219,10 +231,10 @@ object SimsGame extends Game
     val RIGHT = 39
 
     if(state != GameQuit)
-    {
-      // if(mouseButton == LEFT)
-      // 	debugActor = selectActor(mouseX, mouseY)
-    }
+      {
+        // if(mouseButton == LEFT)
+        // 	debugActor = selectActor(mouseX, mouseY)
+      }
   }
 
   //
@@ -236,15 +248,15 @@ object SimsGame extends Game
   {
     if(state == GameStop || state == GamePlay)
       {
-	if(state != GameQuit)
-	  {
-	    key match
-	    {
-	      case 'r' => reset()
-	      case 'q' => exit()
-	      case _ => ()
-	    }
-	  }    
+	      if(state != GameQuit)
+	        {
+	          key match
+	          {
+	            case 'r' => reset()
+	            case 'q' => exit()
+	            case _ => ()
+	          }
+	        }    
       }
   }
 
@@ -269,29 +281,29 @@ object SimsGame extends Game
 
       // 状態の重み関数グラフ
       {
-	app.stroke(0);
-	app.fill(0)
+	      app.stroke(0);
+	      app.fill(0)
 
-	val params = PersonState.getParamDeclares()
+	      val params = PersonState.getParamDeclares()
 
-	val sx = 700.f
-	val sy = 80.f
-	val oy = 60.f
-	val scale = 0.2f
-	var y = 0
-	for(p <- params)
-	  {
-	    app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
-	    app.stroke(192)
-	    GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
-	    GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
-	    
-	    app.stroke(64, 0, 0)
-	    for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
-	      GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
-	    
-	    y += 1
-	  }
+	      val sx = 700.f
+	      val sy = 80.f
+	      val oy = 60.f
+	      val scale = 0.2f
+	      var y = 0
+	      for(p <- params)
+	        {
+	          app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
+	          app.stroke(192)
+	          GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
+	          GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
+	          
+	          app.stroke(64, 0, 0)
+	          for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
+	            GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
+	          
+	          y += 1
+	        }
       }
     }
 
@@ -333,12 +345,12 @@ object SimsGame extends Game
   }
   //
   def selectActor(scrX:Int, scrY:Int):GameActor = 
-  {
-    for(p <- world.getPersons)
-      if(p.isContain(scrX, scrY))
-	return p
-    null
-  }
+    {
+      for(p <- world.getPersons)
+        if(p.isContain(scrX, scrY))
+	        return p
+      null
+    }
 }
 /* ------------------------------------------------------------
  !Sims用アプレット

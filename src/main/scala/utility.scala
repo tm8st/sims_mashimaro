@@ -6,6 +6,7 @@ package tm8st.util
 import scala.util._
 import scala.collection.mutable.Stack
 import processing.core._
+import scala.math._
 
 /* ------------------------------------------------------------
  !便利関数まとめ
@@ -36,8 +37,8 @@ object Util
   //     (for(i <- 0 to n) yield f(i, j)).toArray).toArray
   // }
 
-  def clamp(v:Float, aMin:Float, aMax:Float) = Math.min(Math.max(v, aMin), aMax)
-  def clamp(v:Int, aMin:Int, aMax:Int) = Math.min(Math.max(v, aMin), aMax)
+  def clamp(v:Float, aMin:Float, aMax:Float) = min(max(v, aMin), aMax)
+  def clamp(v:Int, aMin:Int, aMax:Int) = min(max(v, aMin), aMax)
 
   def remap(x:Float, min:Float, max:Float):Float = 
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
@@ -213,13 +214,31 @@ case class Vector3(aX:Float, aY:Float, aZ:Float)
  !衝突判定用型
  !@memo
  ------------------------------------------------------------ */
-case class Bounds(val boxExtent:Vector3, val radius:Float)
+case class Bounds(val boxExtent:Vector3, val radius:Float, val center:Vector3)
 {
-  def this(r:Float) = this(Vector3(r,r,r), r)
-  
+  def this(r:Float, c:Vector3) = this(Vector3(r,r,r), r, c)
+  def this(b:Bounds, c:Vector3) = this(b.boxExtent, b.radius, c)
+
+  //
+  def isContain(x:Float, y:Float):Boolean =
+  {
+    val dx = center.X - x
+    val dy = center.Y -y
+    
+    radius * radius > dx*dx + dy*dy
+  }
+
+  // 
+  def isIntersect(r:Bounds)
+  {
+  	val d = (center - r.center).size()
+    val rad = radius + r.radius
+    rad*rad > d*d
+  }
+
   override def toString() =
   {
-      "Bounds boxExtent " + boxExtent + " radius" + radius
+      "Bounds boxExtent " + boxExtent + " radius" + radius + "center " + center.toString
   }  
 }
 /* ------------------------------------------------------------

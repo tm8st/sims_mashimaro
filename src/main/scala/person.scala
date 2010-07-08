@@ -59,7 +59,9 @@ object PersonState
  !人の肉体的、精神的状態
  !@memo
  ------------------------------------------------------------ */
-case class PersonState(aHunger:Float, aBladder:Float, aBoke:Float, aTsukkomi:Float, aSocial:Float, aHp:Float, aTsukkomiMati:Float = 0.f)
+case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 0.f,
+                       aTsukkomi:Float = 0.f, aSocial:Float = 0.f, aHp:Float = 0.f,
+                       aTsukkomiMati:Float = 0.f)
 {
   // 状態変数
   // val states = List(aHunger, aBladder, aBoke, aTsukkomi,aSocial,
@@ -122,7 +124,7 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   override def name = gameObjectName + ":" + personName
 
   // Primitives
-  var bounds = new Bounds(16.f)
+  var bounds = new Bounds(16.f, pos)
   val sphere = new CSpherePrimitive(Vector3.Zero, bounds)
   {
     strokeColor = new Color(128, 98, 98)
@@ -209,10 +211,13 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   {
     val dif = actionTarget.pos - pos;
     if(dif.size > (bounds.radius + actionTarget.bounds.radius))
+    {
       pos = pos + dif.normal() * walkSpeed * world.deltaTime
+      bounds = new Bounds(bounds.boxExtent, bounds.radius, pos)
+    }
   }
   // 
-  def ChangeState(effect:PersonState)
+  def changeState(effect:PersonState)
   {
     state = state.affect(effect)
   }
@@ -270,14 +275,14 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
     {
       if(getOwner.equals(at) == false)
       {
-	var newState = getOwner.state.affect(a.effect)
-	Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
-	if(newState.calcMode() > maxState.calcMode())
-	  {
-	    maxState = newState
-	    bestAction = a
-	    bestActionTarget = at
-	  }
+	      var newState = getOwner.state.affect(a.effect)
+	      Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
+	      if(newState.calcMode() > maxState.calcMode())
+	        {
+	          maxState = newState
+	          bestAction = a
+	          bestActionTarget = at
+	        }
       }
     }
 

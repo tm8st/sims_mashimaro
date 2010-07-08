@@ -84,9 +84,9 @@ class CharacterRecognition
 
   val HiddenNum = 32
 
-  // learning config
-  val OuterCycles = 100
-  val InnerCycles = 1000
+  // // learning config
+  // val OuterCycles = 100
+  // val InnerCycles = 1000
   val LearningSpeedScale = 1.2f
   val SigmoidSlope = 1.2f
 
@@ -104,6 +104,7 @@ class CharacterRecognition
   var hidden_out = Util.newArray(zeroValue, HiddenNum)
   var output = Util.newArray(zeroValue, OutputNum)
 
+  // 判別
   def recognition(ptn:Seq[Float]) =
   {
     val output = forwardNeuralNet(ptn.toArray)
@@ -113,14 +114,15 @@ class CharacterRecognition
   }
 
   // ネットワークの教育処理
-  private def learning(outerCycles:Int = 100, innerCycles:Int = 10, learningSpeedScale:Float = 1.2f, sigmoidSlope:Float = 1.2f)
+  def learning(outerCycles:Int = 100, innerCycles:Int = 10)
+  // def learning(outerCycles:Int = 100, innerCycles:Int = 10, learningSpeedScale:Float = 1.2f, sigmoidSlope:Float = 1.2f)
   {
-    //教師信号の設定
+    //設定
     def calcTeachValue(i:Int, j:Int) = if(j == i) 1.f else 0.f
     val teach_array = Util.newMultiDimentionArray(calcTeachValue, OutputNum-1, Patterns.length-1)
 
     //外部サイクル
-    for(outerLoopCnt <- 0 to OuterCycles)
+    for(outerLoopCnt <- 0 to outerCycles)
     {
       var outerError = 0.f
 
@@ -130,7 +132,7 @@ class CharacterRecognition
         val sample_in = Patterns(ptn).toArray
         val teach = teach_array(ptn).toArray
 
-        for(innerLoopCnt <- 0 to InnerCycles)
+        for(innerLoopCnt <- 0 to innerCycles)
         {
           outerError += backwardNeuralNet(sample_in, teach, forwardNeuralNet(sample_in))
         }

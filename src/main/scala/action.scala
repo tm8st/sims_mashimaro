@@ -29,9 +29,10 @@ object Action
  !行動クラス
  !@memo
  ------------------------------------------------------------ */
-class Action(val name:String, val effect:PersonState, val channel:Int, val time:Float)
+class Action(val name:String, val effect:PersonState, val effectTarget:PersonState,
+             val channel:Int, val range:Float = 0.f, val time:Float = 1.f)
 {
-  def this(name:String, effect:PersonState, channel:Int) = this(name, effect, channel, 1.f)
+  def this(name:String, effect:PersonState, channel:Int) = this(name, effect, new PersonState, channel, 1.f)
 
   override def toString() = name
   
@@ -47,7 +48,7 @@ class Action(val name:String, val effect:PersonState, val channel:Int, val time:
   // def end(person:APerson, actionTargets:Seq[ActionTarget])
   // {
   // }
-  
+
   // 
   def canDo(person:APerson):Boolean = (channel & person.actionChannel) > 0
 
@@ -55,10 +56,20 @@ class Action(val name:String, val effect:PersonState, val channel:Int, val time:
   def Run(aActor:APerson)
   {
     if(canDo(aActor) == false)
+    {
       Logger.error("invalid pair action: " + name + " " + aActor.name)
+    }
     
     Logger.debug(name)
-    aActor.ChangeState(effect)
+
+    aActor.changeState(effect)
+
+    if(range > 0.f)
+    {
+      aActor.simsWorld().getPersons().
+          filter(aActor.isIntersect(_)).
+            map(_.changeState(effectTarget))
+    }
   }
 }
 

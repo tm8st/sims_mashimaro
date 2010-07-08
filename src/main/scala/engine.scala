@@ -66,15 +66,16 @@ trait Movable extends Tickable
   def pos:Vector3
   def bounds:Bounds
 
-  //
-  def isContain(x:Int, y:Int):Boolean =
-  {
-    val dx = pos.X - x
-    val dy = pos.Y -y
-    
-    bounds.radius * bounds.radius > dx*dx + dy*dy
-  }
+  def move(dif:Vector3)
 
+  // def move(dif:Vector3)
+  // {
+  //   pos = pos + dif
+  //   bounds = new Bounds(bounds.boxExtent, bounds.radius, pos)
+  // }
+ 
+  //
+  def isContain(x:Int, y:Int):Boolean = bounds.isContain(x, y)
   //
   def isIntersect(r:Movable):Boolean =
   {
@@ -89,7 +90,7 @@ trait Movable extends Tickable
  ------------------------------------------------------------ */
 abstract class Primitive extends GameObject with Movable with Drawable
 {
-  var bounds = new Bounds(1.f)
+  var bounds = new Bounds(1.f, pos)
   var world:World = null
 }
 /* ------------------------------------------------------------
@@ -99,10 +100,16 @@ abstract class Primitive extends GameObject with Movable with Drawable
 abstract class CPrimitive extends GameObject with Movable with Drawable
 {
   var owner:GameActor = null
-  def translation:Vector3
+  var translation:Vector3
   def pos = if(owner != null) owner.pos + translation else translation
-  var bounds = new Bounds(0.f)
+  var bounds = new Bounds(0.f, pos)
   var world:World = null
+
+  def move(dif:Vector3)
+  {
+    translation = translation + dif
+    bounds = new Bounds(bounds, pos)
+  }
 }
 /* ------------------------------------------------------------
  !形状プリミティブ
