@@ -64,6 +64,11 @@ class Action(val name:String, val effect:PersonState, val effectTarget:PersonSta
 
     aActor.changeState(effect)
 
+    if(aActor.currentActionTarget)
+    {
+      aActor.currentActionTarget.changeState(effectTarget)
+    }
+
     if(range > 0.f)
     {
       aActor.simsWorld().getPersons().

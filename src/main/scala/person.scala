@@ -113,6 +113,7 @@ case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 
  ------------------------------------------------------------ */
 object APerson
 {
+  // 記憶容量
   val ShortMemoryMaxLength = 5
   val ShallowMemoryMaxLength = 5
   val DeepMemoryMaxLength = 10
@@ -163,20 +164,20 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
 	    {
 	      actionCounter += delta
 	      if(actionCounter > currentAction.time)
-          {
-            Logger.debug(name + " Run Action " + currentAction.name)  
+        {
+          Logger.debug(name + " Run Action " + currentAction.name)
 
-            currentAction.Run(this)
+          currentAction.Run(this)
 
-            world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
+          world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
 
-            addMemory(
-              new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f))
+          addMemory(
+            new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f))
 
-            actionCounter = 0.f
-            currentAction = null
-            currentActionTarget = null
-          }
+          actionCounter = 0.f
+          currentAction = null
+          currentActionTarget = null
+        }
 	    }
       
       aiRoot.tick(delta)

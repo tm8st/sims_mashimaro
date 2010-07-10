@@ -208,9 +208,9 @@ object SimsGame extends Game
     
     // world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
     // world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
-    // world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
-    // world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
-    world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
+    world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
+    world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
+    // world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
     
     //define objects
     world.addObject(new AObject("空間", Vector3(320, 320, 0), 320.f, world, List(wordBoke)))

@@ -27,7 +27,7 @@ object Benchmark
       def avgMsec() = timeToMsec(avg)
       def devMsec() = timeToMsec(dev)
     }
-    var result:ListBuffer[Record] = new ListBuffer()
+    var result = new ListBuffer[Record]()
 
     // public API
     def report(mult:Int)(block: => Unit): Unit = report("anonymous", mult)(block)

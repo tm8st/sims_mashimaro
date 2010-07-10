@@ -32,23 +32,23 @@ class BenchmarkSuite extends FunSuite with ShouldMatchers
       case _ => y match { case 0 => ack(x - 1, 1); case _ => ack(x - 1, ack(x, y - 1))}
     }
 
-    Benchmark.run("A Ack perf test") { b =>
-      b.report("ack(3, 10)") { ack(3, 10) }
-      b.report("ack(3, 10)", 10) { ack(3, 10) }
+    Benchmark.run("A Ack perf test") { r =>
+      r.report("ack(3, 10)") { ack(3, 10) }
+      r.report("ack(3, 10)", 10) { ack(3, 10) }
       None
    }
 
-    Benchmark.run("A Math perf test") { b =>
-      b.report("mul", 100) { (1 to 100).reduceLeft(_ * _) }
-      b.report("add", 100) { (1 to 100).reduceLeft(_ + _) }
+    Benchmark.run("A Math perf test") { r =>
+      r.report("mul", 100) { (1 to 100).reduceLeft(_ * _) }
+      r.report("add", 100) { (1 to 100).reduceLeft(_ + _) }
       None
    }
 
     var testObj = new MemFunTest()
-    Benchmark.run("A MemFun perf test") { b =>
-      b.report("memFun new", 100) { var t = new MemFunTest(); for(i <- 0 to 100) t.fun() }
-      b.report("memFun scope", 100) { for(i <- 0 to 100) testObj.fun() }
-      b.report("localVar", 100) { var t = 0; for(i <- 1 to 100) t += 1 }
+    Benchmark.run("A MemFun perf test") { r =>
+      r.report("memFun new", 100) { var t = new MemFunTest(); for(i <- 0 to 100) t.fun() }
+      r.report("memFun scope", 100) { for(i <- 0 to 100) testObj.fun() }
+      r.report("localVar", 100) { var t = 0; for(i <- 1 to 100) t += 1 }
       None
    }
   }
@@ -93,8 +93,9 @@ class TestSuite extends FunSuite with ShouldMatchers
   test("""Util line""")
   {
     assert(Util.getMaxLineLength(List("a", "bb", "ccc", "dddd", "eeeee")) == 5)
-    assert(Util.getMaxLineLength(List("a", "bb", "ccc", "dddd", "eeeee")) != 0)
+    assert(Util.getMaxLineLength(List("")) == 0)
 
+    assert(Util.getLineNum(List("")) == 1)
     assert(Util.getLineNum(List("a", "bb", "ccc", "dddd", "eeeee")) == 5)
   }
 
