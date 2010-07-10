@@ -81,7 +81,7 @@ case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 
   // 
   def updateStates(delta:Float) = 
     new PersonState(hunger - 1.f * delta, bladder - 1.f * delta,
-                    boke - 5.f * delta, tsukkomi - 0.f * delta,
+                    boke - 5.f * delta, tsukkomi + 5.f * delta,
                     social - 1.f * delta, hp + 1.f * delta, tsukkomiMati + 1.f * delta)
 
   //

@@ -182,7 +182,11 @@ object SimsGame extends Game
                                     SerifType.OgoeTsukkomi->List("うっさい!")
                                     // SerifType.OgoeTsukkomi->List("うっさい!", "なんでやねん!", "おい!こら!なんでやねん!")
                                   )))
-    // world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
+    world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna,
+                              Map(SerifType.Nichijo->List("あついですわ"),
+                                    SerifType.OgoeBoke->List(""),
+                                    SerifType.OgoeTsukkomi->List("うるさいですわ!")
+                                  )))
 
     //define objects
     world.addObject(new AObject("空間", Vector3(320, 320, 0), 320.f, world, List()))
@@ -292,11 +296,11 @@ object SimsGame extends Game
 	      uiFont, false)
     )
     // 存在リスト
-    debugGUILayout.addElement(
-      new LayoutElementString(
-	      List("Actors("+world.getActors().length+"):") ::: world.getActors().map(_.name),
-	      uiFont, false)
-    )
+    // debugGUILayout.addElement(
+    //   new LayoutElementString(
+	  //     List("Actors("+world.getActors().length+"):") ::: world.getActors().map(_.name),
+	  //     uiFont, false)
+    // )
     // 人状態
     world.getPersons().map(p =>
       debugGUILayout.addElement(
