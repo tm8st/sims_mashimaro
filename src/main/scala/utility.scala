@@ -16,6 +16,7 @@ object Util
 {
   val rand = new Random
   def fRand() = rand.nextFloat()
+  def iRand() = abs(rand.nextInt())
 
   // とりあえず2次元まで対応
   def newArray(f: Int => Float, n:Int):Array[Float] =

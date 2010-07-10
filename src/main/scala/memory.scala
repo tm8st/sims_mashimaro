@@ -30,13 +30,13 @@ object MemoryPlace extends Enumeration
  !@memo 見た事、聞いた事、やった事、感じた事などの記憶
  ------------------------------------------------------------ */
 class Memory(val time:Float, val place:Vector3, val actActor:AActor, val action:Action,
-	     val targetActor:ActionTarget, val feedback:Feedback.Value,
+	     val targetActors:List[ActionTarget], val feedback:Feedback.Value,
 	     var strength:Float)
 {
   override def toString() =
   {
     "Time " + time + " Act:" + action.toString() + " Feed:" + feedback.toString() +
-    " Strength:" + strength.toString() + " Target:" + targetActor.name
+    " Strength:" + strength.toString() + " Target:" + targetActors.map(_.name)
   }
 }
 /* ------------------------------------------------------------

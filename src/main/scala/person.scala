@@ -79,9 +79,9 @@ case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 
     PersonState(hunger + r.hunger, bladder + r.bladder, boke + r.boke, tsukkomi + r.tsukkomi, social + r.social, hp + r.hp, tsukkomiMati + r.tsukkomiMati)
 
   // 
-  def update(delta:Float) = 
+  def updateStates(delta:Float) = 
     new PersonState(hunger - 1.f * delta, bladder - 1.f * delta,
-                    boke - 0.f * delta, tsukkomi - 0.f * delta,
+                    boke - 5.f * delta, tsukkomi - 0.f * delta,
                     social - 1.f * delta, hp + 1.f * delta, tsukkomiMati + 1.f * delta)
 
   //
@@ -119,7 +119,7 @@ object APerson
   val DeepMemoryMaxLength = 10
 }
 class APerson(val personName:String, var pos:Vector3, val world:World,
-              val actions:List[Action], var actionChannel:Int) extends ActionTarget with AActor with MemoryOwner
+              val actions:List[Action], var actionChannel:Int, val serifMap:Map[SerifType.Value, List[String]]) extends ActionTarget with AActor with MemoryOwner
 {
   override def gameObjectName = "APerson"
   override def name = gameObjectName + ":" + personName
@@ -147,7 +147,7 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   // Action variable
   var actionCounter = 0.f
   var currentAction:Action = null
-  var currentActionTarget:ActionTarget = null
+  var currentActionTargets:List[ActionTarget] = null
 
   // AI Root
   val aiRoot = new PGRoot(this)
@@ -169,20 +169,24 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
 
           currentAction.Run(this)
 
-          world.addActor(new ASerif(personName + ">" + currentAction.name, pos, world))
-
           addMemory(
-            new Memory(world.currentTime, pos, this, currentAction, currentActionTarget, Feedback.Fun, 100.f))
+            new Memory(world.currentTime, pos, this, currentAction, currentActionTargets, Feedback.Fun, 100.f))
+
+          Debug
+          {
+            if(currentAction.isSerifAction == false)
+              world.addActor(new ADebugSerif(this, personName + ">" + currentAction.name, pos, world))
+          }
 
           actionCounter = 0.f
           currentAction = null
-          currentActionTarget = null
+          currentActionTargets = List()
         }
 	    }
       
       aiRoot.tick(delta)
       
-      state = state.update(delta)
+      state = state.updateStates(delta)
     }
   }
 
@@ -193,7 +197,7 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
 
     actionCounter = 0.f
     currentAction = action
-    currentActionTarget = actionTarget
+    currentActionTargets = List(actionTarget)
   }
   // 
   def isActionEnd() = currentAction == null
@@ -217,12 +221,27 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
       bounds = new Bounds(bounds.boxExtent, bounds.radius, pos)
     }
   }
+  
   // 
-  def changeState(effect:PersonState)
+  override def changeState(effect:PersonState)
   {
     state = state.affect(effect)
   }
 
+  // 
+  def say(serifType:SerifType.Value, effectTarget:PersonState)
+  {
+    val ls = serifMap.get(serifType) match {
+    case Some(l) => l
+    case _ => List()
+    }
+    if(ls.isEmpty == false)
+    {
+      val index = Util.iRand() % ls.length
+      world.addActor(new ASerif(this, ls(index), serifType, 128.f, effectTarget, pos, world))
+    }
+  }
+  
   //
   def getShortMemoryMaxLength() = APerson.ShortMemoryMaxLength
   def getShallowMemoryMaxLength() = APerson.ShallowMemoryMaxLength
@@ -372,13 +391,13 @@ class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:Act
     else
     {
       if(checkIntervalCounter > 1.f)
-	{
-	  checkIntervalCounter = 0.f
-	  if(getOwner.isReachable(actionTarget) == false)
-	  {
-	    setFailed()
-	  }
-	}
+	      {
+	        checkIntervalCounter = 0.f
+	        if(getOwner.isReachable(actionTarget) == false)
+	          {
+	            setFailed()
+	          }
+	      }
     }
   }
 }

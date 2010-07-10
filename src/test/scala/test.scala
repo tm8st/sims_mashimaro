@@ -2,6 +2,7 @@ import org.scalatest.FunSuite
 
 import scala.collection.immutable._
 import scala.collection.mutable.Stack
+import scala.collection.mutable.Map
 
 import org.scalatest.Spec
 import org.scalatest.FlatSpec
@@ -105,6 +106,36 @@ class TestSuite extends FunSuite with ShouldMatchers
     cr.learning(10, 10)
     cr.recognition(CharacterRecognition.SimplePatterns(0)) should equal (0)
     cr.recognition(CharacterRecognition.SimplePatterns(1)) should equal (1)
+  }
+
+  test("""Map""")
+  {
+    var map = Map("key1"->"val1", "key2"->"val2")
+
+    assert(map("key1") == "val1")
+
+    // var map = Map("key1"->"val1", "key2"->"val2")
+    // val m = new Map()
+    // cr.learning(10, 10)
+    // cr.recognition(CharacterRecognition.SimplePatterns(0)) should equal (0)
+    // cr.recognition(CharacterRecognition.SimplePatterns(1)) should equal (1)
+  }
+
+  test("""List""")
+  {
+    var ls = List(1, 2, 3)
+
+    assert(ls(2) == 3)
+    assert(ls(0) == 1)
+
+    for(i <- 0 to 100)
+      assert(Util.iRand() % ls.length < 3)
+
+    // var map = Map("key1"->"val1", "key2"->"val2")
+    // val m = new Map()
+    // cr.learning(10, 10)
+    // cr.recognition(CharacterRecognition.SimplePatterns(0)) should equal (0)
+    // cr.recognition(CharacterRecognition.SimplePatterns(1)) should equal (1)
   }
 
   test("""Util newArray""")

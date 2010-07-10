@@ -6,11 +6,11 @@ package tm8st.sims
 import processing.core._
 import scala.util._
 
-import tm8st.util._
-import tm8st.util.layout._
 import tm8st.engine._
+import tm8st.util._
 import tm8st.aigoal._
 import tm8st.sims._
+import tm8st.util.layout._
 import tm8st.util.chararec._
 
 /* ------------------------------------------------------------
@@ -44,6 +44,9 @@ trait AActor extends SimsActor
 trait ActionTarget extends SimsActor
 {
   val actions:List[Action]
+
+  // 
+  def changeState(effect:PersonState){}
 }
 /* ------------------------------------------------------------
  !オブジェクトアクタ
@@ -61,46 +64,6 @@ class AObject(val objectName:String, var pos:Vector3, var radius:Float, val worl
     fillColor = new Color(128, 128, 255)
   }
   addPrimitive(label)
-}
-/* ------------------------------------------------------------
- !台詞アクタ
- !@memo
- ------------------------------------------------------------ */
-class ASerif(val caption:String, var pos:Vector3, val world:World) extends SimsActor
-{
-  override def gameObjectName = "ASerif"
-  override def name = gameObjectName + ":" + caption
-
-  var bounds = Bounds(new Vector3(caption.length * 12 / 2, 12, 0.f), 12.f, pos)
-  var timer = 120
-
-  // primitives
-  val box = new CBoxPrimitive(Vector3.Zero, bounds)
-  {
-    strokeColor = new Color(0, 0, 32, 120)
-  }
-  addPrimitive(box)
-  val label = new CLabelPrimitive(caption, Vector3.Zero, bounds, SimsGame.getFont(0))
-  {
-    strokeColor = new Color(0, 0, 32, 120)
-  }
-  addPrimitive(label)
-
-  // 
-  override def tick(delta:Float)
-  {
-    super.tick(delta)
-
-    pos = pos - Vector3(0.0f, 0.5f, 0.f)
-    label.strokeColor -= Color(0, 0, 0, 1)
-    label.fillColor -= Color(0, 0, 0, 1)
-    box.strokeColor -= Color(0, 0, 0, 1)
-    timer -= 1
-    if(timer < 0)
-      {
-        setDestroy()
-      }
-  }
 }
 /* ------------------------------------------------------------
  !世界
@@ -188,12 +151,12 @@ object SimsGame extends Game
     val dakitsuki = new Action("抱きつき", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val mitsumeru = new Action("見つめる", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val yomu = new Action("読む(絵本)", PersonState(0.f, 0.f, 5.f, 0.f, 0.f, -5.f), Action.ChannelMatsuri)
-    val talk = new Action("話す", PersonState(0.f, 0.f, 0.f, 0.f, 10.f, -3.f), Action.ChannelUsual)
     val watchTV = new Action("見る", PersonState(0.f, 0.f, 0.f, 0.f, 1.f, -5.f), Action.ChannelUsual)
+    val talk = new Action("話す", PersonState(0.f, 0.f, 0.f, 0.f, 10.f, -3.f), Action.ChannelUsual, serifType = SerifType.Nichijo)
     val wordBoke = new Action("一言ぼけ", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f),
-                              PersonState(aTsukkomi = -30), Action.ChannelBoke, 160.f)
+                              PersonState(aTsukkomi = -30), Action.ChannelBoke, 160.f, serifType = SerifType.OgoeBoke)
     val tsukkomi = new Action("つっこみ", PersonState(0.f, 0.f, 0.f, 20.f, 5.f, -5.f),
-                              PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f), Action.ChannelTsukkomi, 160.f)
+                              PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f), Action.ChannelTsukkomi, 160.f, serifType = SerifType.OgoeTsukkomi)
 
     //define persons
     val channelAna = Action.ChannelUsual | Action.ChannelTsukkomi
@@ -205,15 +168,24 @@ object SimsGame extends Game
     val bokeActions = List(wordBoke, talk)
     val tsukkomiActions = List(tsukkomi, talk)
     val bisyoujoActions = List(dakitsuki, mitsumeru, talk)
-    
+
     // world.addPerson(new APerson("伸恵", new Vector3(256, 320, 0), world, tsukkomiActions, channelNobue))
     // world.addPerson(new APerson("茉莉", new Vector3(198, 198, 0), world, bisyoujoActions, channelMatsuri))
-    world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu))
-    world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika))
+    world.addPerson(new APerson("美羽", Vector3(64, 128, 0), world, tsukkomiActions, channelMiu,
+                                Map(SerifType.Nichijo->List("あついなー", "なんか面白いことないかなー"),
+                                    SerifType.OgoeBoke->List("テレビジョン!"),
+                                    SerifType.OgoeTsukkomi->List("なんでやねん!")
+                                  )))
+    world.addPerson(new APerson("千佳", Vector3(128, 32, 0), world, tsukkomiActions, channelChika,
+                                Map(SerifType.Nichijo->List("あついなー"),
+                                    SerifType.OgoeBoke->List(""),
+                                    SerifType.OgoeTsukkomi->List("うっさい!")
+                                    // SerifType.OgoeTsukkomi->List("うっさい!", "なんでやねん!", "おい!こら!なんでやねん!")
+                                  )))
     // world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna))
-    
+
     //define objects
-    world.addObject(new AObject("空間", Vector3(320, 320, 0), 320.f, world, List(wordBoke)))
+    world.addObject(new AObject("空間", Vector3(320, 320, 0), 320.f, world, List()))
     world.addObject(new AObject("ベッド", Vector3(64, 64, 0), 64.f, world, List(push, sleep, sit)))
     world.addObject(new AObject("トイレ", Vector3(32, 256, 0), 32.f, world, List(push, toilet)))
     world.addObject(new AObject("冷蔵庫", Vector3(420, 258, 0), 24.f, world, List(push, eat, drink)))

@@ -30,9 +30,10 @@ object Action
  !@memo
  ------------------------------------------------------------ */
 class Action(val name:String, val effect:PersonState, val effectTarget:PersonState,
-             val channel:Int, val range:Float = 0.f, val time:Float = 1.f)
+             val channel:Int, val range:Float = 0.f, val time:Float = 1.f, val serifType:SerifType.Value = SerifType.Empty)
 {
-  def this(name:String, effect:PersonState, channel:Int) = this(name, effect, new PersonState, channel, 1.f)
+  def this(name:String, effect:PersonState, channel:Int) = this(name, effect, new PersonState, channel, 0.f, 1.f)
+  def this(name:String, effect:PersonState, channel:Int, serifType:SerifType.Value) = this(name, effect, new PersonState, channel, 0.f, 1.f, serifType)
 
   override def toString() = name
   
@@ -52,29 +53,53 @@ class Action(val name:String, val effect:PersonState, val effectTarget:PersonSta
   // 
   def canDo(person:APerson):Boolean = (channel & person.actionChannel) > 0
 
-  // 
+  //
+  def isSerifAction = serifType != SerifType.Empty
+
+  //
   def Run(aActor:APerson)
   {
     if(canDo(aActor) == false)
     {
       Logger.error("invalid pair action: " + name + " " + aActor.name)
     }
-    
     Logger.debug(name)
-
-    aActor.changeState(effect)
-
-    if(aActor.currentActionTarget)
+    
+    if(isSerifAction)
     {
-      aActor.currentActionTarget.changeState(effectTarget)
+      aActor.changeState(effect)
+      aActor.say(serifType, effectTarget)
     }
-
-    if(range > 0.f)
+    else
     {
-      aActor.simsWorld().getPersons().
-          filter(aActor.isIntersect(_)).
-            map(_.changeState(effectTarget))
+      aActor.changeState(effect)
+
+      aActor.currentActionTargets.foreach(_.changeState(effectTarget))
     }
   }
-}
 
+  // 
+  // def Run(aActor:APerson)
+  // {
+  //   if(canDo(aActor) == false)
+  //   {
+  //     Logger.error("invalid pair action: " + name + " " + aActor.name)
+  //   }
+    
+  //   Logger.debug(name)
+
+  //   aActor.changeState(effect)
+
+  //   if(aActor.currentActionTarget)
+  //   {
+  //     aActor.currentActionTarget.changeState(effectTarget)
+  //   }
+
+  //   if(range > 0.f)
+  //   {
+  //     aActor.simsWorld().getPersons().
+  //         filter(aActor.isIntersect(_)).
+  //           map(_.changeState(effectTarget))
+  //   }
+  // }
+}
