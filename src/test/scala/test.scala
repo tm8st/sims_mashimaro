@@ -1,3 +1,7 @@
+/* ------------------------------------------------------------
+ !Test codes.
+ ------------------------------------------------------------ */
+
 import org.scalatest.FunSuite
 
 import scala.collection.immutable._
