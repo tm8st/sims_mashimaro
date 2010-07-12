@@ -90,7 +90,7 @@ trait Movable extends Tickable
  ------------------------------------------------------------ */
 abstract class Primitive extends GameObject with Movable with Drawable
 {
-  var bounds = new Bounds(1.f, pos)
+  // var bounds = new Bounds(1.f, pos)
   var world:World = null
 }
 /* ------------------------------------------------------------
@@ -102,13 +102,14 @@ abstract class CPrimitive extends GameObject with Movable with Drawable
   var owner:GameActor = null
   var translation:Vector3
   def pos = if(owner != null) owner.pos + translation else translation
-  var bounds = new Bounds(0.f, pos)
+  // var bounds = new Bounds(0.f, pos)
   var world:World = null
 
   def move(dif:Vector3)
   {
     translation = translation + dif
-    bounds = new Bounds(bounds, pos)
+
+    // bounds = new Bounds(bounds, pos)
   }
 }
 /* ------------------------------------------------------------
@@ -136,7 +137,7 @@ abstract class CShapePrimitive extends CPrimitive
  !矩形プリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CBoxPrimitive(var translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CBoxPrimitive(var translation:Vector3, var bounds:Bounds) extends CShapePrimitive
 {
   // 
   override def draw()
@@ -150,20 +151,20 @@ class CBoxPrimitive(var translation:Vector3, bounds:Bounds) extends CShapePrimit
  !球プリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CSpherePrimitive(var translation:Vector3, bounds:Bounds) extends CShapePrimitive
+class CSpherePrimitive(var translation:Vector3, var bounds:Bounds) extends CShapePrimitive
 {
   // 
   override def draw()
   {
     super.draw()
-    GL.ellipse(pos.X, pos.Y, bounds.radius, bounds.radius);
+    GL.ellipse(pos.X, pos.Y, bounds.radius, bounds.radius)
   }
 }
 /* ------------------------------------------------------------
  !ラベルプリミティブ
  !@memo
  ------------------------------------------------------------ */
-class CLabelPrimitive(var caption:String, var translation:Vector3, bounds:Bounds, var font:GLFont) extends CShapePrimitive
+class CLabelPrimitive(var caption:String, var translation:Vector3, var bounds:Bounds, var font:GLFont) extends CShapePrimitive
 {
   isFillShape = true
   var isCentering = true

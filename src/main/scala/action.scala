@@ -33,6 +33,7 @@ class Action(val name:String, val effect:PersonState, val effectTarget:PersonSta
              val channel:Int, val range:Float = 0.f, val time:Float = 1.f, val serifType:SerifType.Value = SerifType.Empty)
 {
   def this(name:String, effect:PersonState, channel:Int) = this(name, effect, new PersonState, channel, 0.f, 1.f)
+  def this(name:String, effect:PersonState, channel:Int, range:Float) = this(name, effect, new PersonState, channel, range, 1.f)
   def this(name:String, effect:PersonState, channel:Int, serifType:SerifType.Value) = this(name, effect, new PersonState, channel, 0.f, 1.f, serifType)
 
   override def toString() = name
@@ -68,7 +69,7 @@ class Action(val name:String, val effect:PersonState, val effectTarget:PersonSta
     if(isSerifAction)
     {
       aActor.changeState(effect)
-      aActor.say(serifType, effectTarget)
+      aActor.say(serifType, effectTarget, range)
     }
     else
     {

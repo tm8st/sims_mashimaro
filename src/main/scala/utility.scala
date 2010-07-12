@@ -301,3 +301,14 @@ class Spline(points:Array[(Float, Float)])
 	       - (z(i) * 2 + z(i + 1)) * h)) * d + y(i);
   }
 }
+/* ------------------------------------------------------------
+   !関数のように使えるif テンプレートをちゃんとつかう
+   !@memo
+------------------------------------------------------------ */
+object IF
+{
+  def apply(cond:Boolean)(aThen: => Float)(aElse: => Float) =
+  {
+    if(cond) aThen else aElse
+  }
+}

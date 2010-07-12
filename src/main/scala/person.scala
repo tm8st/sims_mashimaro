@@ -80,7 +80,7 @@ case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 
 
   // 
   def updateStates(delta:Float) = 
-    new PersonState(hunger - 1.f * delta, bladder - 1.f * delta,
+    new PersonState(hunger - 0.01f * delta, bladder - 0.01f * delta,
                     boke - 5.f * delta, tsukkomi + 5.f * delta,
                     social - 1.f * delta, hp + 1.f * delta, tsukkomiMati + 1.f * delta)
 
@@ -226,19 +226,22 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   override def changeState(effect:PersonState)
   {
     state = state.affect(effect)
+
+    aiRoot.thinkNextAction()
   }
 
   // 
-  def say(serifType:SerifType.Value, effectTarget:PersonState)
+  def say(serifType:SerifType.Value, effectTarget:PersonState, range:Float)
   {
     val ls = serifMap.get(serifType) match {
     case Some(l) => l
     case _ => List()
     }
+
     if(ls.isEmpty == false)
     {
       val index = Util.iRand() % ls.length
-      world.addActor(new ASerif(this, ls(index), serifType, 128.f, effectTarget, pos, world))
+      world.addActor(new ASerif(this, ls(index), serifType, range, effectTarget, pos, world))
     }
   }
   
@@ -263,6 +266,8 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 {
   override def name() = "AIRoot"
 
+  var needRethink = false
+  
   // 
   override def activate()
   {
@@ -277,9 +282,26 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
     super.tick(delta)
 
     val ret = tickSubGoals(delta)
-    if(ret == AIGoal.STATE_FINISHED)
+    if(ret == AIGoal.STATE_FINISHED || needRethink)
     {
       thinkNextAction()
+    }
+
+  
+  }
+
+  //! 強制終了可能か
+  override def isQuitable = false
+  //! 中断可能か
+  override def isSuspendable = false
+
+  //! メッセージ処理
+  override def handleMessage(msg:AIGMessage)
+  {
+    msg match
+    {
+    case m:AIGRethinkMessage => { thinkNextAction(); }
+    case _ => super.handleMessage(msg)
     }
   }
 
@@ -287,6 +309,20 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
   def thinkNextAction()
   {
     Logger.debug("thinkNextAction: " + getOwner.name)
+
+    if(subGoals.isEmpty == false)
+    {
+      val activeSubGoals = getActiveSubGoals()
+      if(activeSubGoals.exists(_.isQuitable == false) == false)
+      {
+        removeSubGoals()
+      }
+      else
+      {
+        needRethink = true
+        return
+      }
+    }
 
     var maxState = getOwner.state
     var bestAction:Action = null
@@ -298,11 +334,11 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 	      var newState = getOwner.state.affect(a.effect)
 	      Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
 	      if(newState.calcMode() > maxState.calcMode())
-	        {
-	          maxState = newState
-	          bestAction = a
-	          bestActionTarget = at
-	        }
+	      {
+	        maxState = newState
+	        bestAction = a
+	        bestActionTarget = at
+	      }
       }
     }
 
@@ -310,6 +346,7 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
     {
       addSubGoal(new PGAction(getOwner, bestAction, bestActionTarget))
       subGoals.head.activate()
+      needRethink = false
 
       Logger.debug("Set Action: " + getOwner.name + " " + bestAction.name)
     }
@@ -410,7 +447,12 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
   override def name() = "PGActionRun" + "("+action.name+" target "+actionTarget.name+")"
 
   var checkIntervalCounter = 0.f
-  
+
+  //! 強制終了可能か
+  override def isQuitable = false
+  //! 中断可能か
+  override def isSuspendable = false
+
   // 
   override def activate()
   {

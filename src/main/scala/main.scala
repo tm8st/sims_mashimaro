@@ -151,12 +151,12 @@ object SimsGame extends Game
     val dakitsuki = new Action("抱きつき", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val mitsumeru = new Action("見つめる", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f), Action.ChannelOyaji)
     val yomu = new Action("読む(絵本)", PersonState(0.f, 0.f, 5.f, 0.f, 0.f, -5.f), Action.ChannelMatsuri)
-    val watchTV = new Action("見る", PersonState(0.f, 0.f, 0.f, 0.f, 1.f, -5.f), Action.ChannelUsual)
+    val watchTV = new Action("見る", PersonState(0.f, 0.f, 0.f, 0.f, 1.f, -5.f), Action.ChannelUsual, range=128.f)
     val talk = new Action("話す", PersonState(0.f, 0.f, 0.f, 0.f, 10.f, -3.f), Action.ChannelUsual, serifType = SerifType.Nichijo)
     val wordBoke = new Action("一言ぼけ", PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f),
-                              PersonState(aTsukkomi = -30), Action.ChannelBoke, 160.f, serifType = SerifType.OgoeBoke)
+                              PersonState(aTsukkomi = -30), Action.ChannelBoke, 320.f, serifType = SerifType.OgoeBoke)
     val tsukkomi = new Action("つっこみ", PersonState(0.f, 0.f, 0.f, 20.f, 5.f, -5.f),
-                              PersonState(0.f, 0.f, 20.f, 0.f, 5.f, -5.f, 50.f), Action.ChannelTsukkomi, 160.f, serifType = SerifType.OgoeTsukkomi)
+                              PersonState(0.f, 0.f, 0.f, 20.f, 5.f, -5.f, 50.f), Action.ChannelTsukkomi, 320.f, serifType = SerifType.OgoeTsukkomi)
 
     //define persons
     val channelAna = Action.ChannelUsual | Action.ChannelTsukkomi
@@ -181,7 +181,7 @@ object SimsGame extends Game
                                     SerifType.OgoeBoke->List(""),
                                     SerifType.OgoeTsukkomi->List("うっさい!")
                                     // SerifType.OgoeTsukkomi->List("うっさい!", "なんでやねん!", "おい!こら!なんでやねん!")
-                                  )))
+                                   )))
     world.addPerson(new APerson("アナ", new Vector3(128, 128, 0), world, bisyoujoActions, channelAna,
                               Map(SerifType.Nichijo->List("あついですわ"),
                                     SerifType.OgoeBoke->List(""),

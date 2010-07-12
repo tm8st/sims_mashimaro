@@ -18,14 +18,16 @@ object Benchmark
   {
     type Times = ListBuffer[Double]
     case class Record(val label:String, val times:Times,
-                      val sum:Double, val avg:Double,
-                      val dev:Double)
+                      val sum:Double, val avg:Double, val dev:Double,
+                      val minT:Double, val maxT:Double)
     {
       private def timeToMsec(t:Double) = t / 1000000.0
 
       def sumMsec() = timeToMsec(sum)
       def avgMsec() = timeToMsec(avg)
       def devMsec() = timeToMsec(dev)
+      def minMsec() = timeToMsec(minT)
+      def maxMsec() = timeToMsec(maxT)
     }
     var result = new ListBuffer[Record]()
 
@@ -49,8 +51,11 @@ object Benchmark
       val sum = times.reduceLeft(_ + _)
       val avg = sum / mult
       val dev = sqrt(times.foldLeft(0.0)((sum,x) => sum + (x-avg) * (x-avg)) / mult)
+      // Float.Max みたいなのにすべき
+      val minT = times.foldLeft(1000000000.0)(min(_, _))
+      val maxT = times.foldLeft(0.0)(max(_, _))
 
-      val item = Record(label, times, sum, avg, dev)
+      val item = Record(label, times, sum, avg, dev, minT, maxT)
       result += item
     }
   }
@@ -66,21 +71,21 @@ object Benchmark
   // output result
   private def print0(ostream: PrintStream, result: String) = ostream.println(result)
   private def print0(ostream: FileOutputStream, result: String) = ostream.write(result.toArray.map(_.toByte))
+  private def formatTime(t:Double) = String.format("%05f", t: java.lang.Double)
   private def format(label: String, reporter: Reporter) =
   {
     reporter.result.map { r =>
-      val totalMsec = String.format("%05f", r.sumMsec(): java.lang.Double)
+      val totalMsec = formatTime(r.sumMsec())
       var detail  = "  [" + r.label + "]"
-      if(r.times.length > 1)
-        detail += " x " + r.times.length + " "
+      if(r.times.length > 1) detail += " x " + r.times.length
       detail += " : Total " + totalMsec + " msec."
 
       if(r.times.length > 1)
       {
-        val avgMsec = String.format("%05f", r.avgMsec(): java.lang.Double)
-        detail += avgMsec.toString.mkString("\n   Avg. ", "", " msec.")
-        val devMsec = String.format("%05f", r.devMsec(): java.lang.Double)
-        detail += devMsec.toString.mkString("\n   Dev. ", "", " msec.")
+        detail += formatTime(r.avgMsec()).toString.mkString("\n   Avg. ", "", " msec.")
+        detail += formatTime(r.devMsec()).toString.mkString("   Dev. ", "", " msec.")
+        detail += formatTime(r.minMsec()).toString.mkString("\n   Min. ", "", " msec.")
+        detail += formatTime(r.maxMsec()).toString.mkString("   Max. ", "", " msec.")
       }
 
       detail

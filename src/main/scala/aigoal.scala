@@ -8,6 +8,15 @@ import scala.math._
 import tm8st.util._
 
 /* ------------------------------------------------------------
+   !ゴールAI用のメッセージクラス
+   !@memo
+------------------------------------------------------------ */
+case class AIGMessage()
+case class AIGQuitMessage()
+case class AIGSuspendMessage()
+case class AIGRethinkMessage()
+
+/* ------------------------------------------------------------
  !ゴールAI周りで使用する定数等の定義
  !@memo
  ------------------------------------------------------------ */
@@ -53,6 +62,11 @@ abstract class AIGoal[TActor](aOwner:TActor)
   {
     Logger.debug(name + " activate.")
   }
+  //! 一時停止
+  def inActivate()
+  {
+    Logger.debug(name + " inActivate.")
+  }
   //! 更新
   def tick(delta:Float)
   {
@@ -64,12 +78,32 @@ abstract class AIGoal[TActor](aOwner:TActor)
     Logger.debug(name + " terminate.")
   }
 
+  //! 強制終了可能か
+  def isQuitable = true
+  //! 中断可能か
+  def isSuspendable = true
+  
+  //! メッセージ処理
+  def handleMessage(msg:AIGMessage)
+  {
+    Logger.debug(name + " handleMessage " + msg.toString() + ".")
+
+    msg match
+    {
+    case m:AIGQuitMessage => if(isQuitable) terminate()
+    case m:AIGSuspendMessage => if(isSuspendable) inActivate()
+    case _ => 
+    }
+  }
+
   //! 子ゴールの追加
   def addSubGoal(subGoal:SelfType){ assert(false); }
   //! 子ゴールの削除
   def removeSubGoal(subGoal:SelfType){}
   //! 子ゴールの全削除
   def removeSubGoals(){}
+
+  def getActiveSubGoals():List[SelfType] = List()
 
   def isActive() = state == AIGoal.STATE_ACTIVE
   def isInActive() = state == AIGoal.STATE_INACTIVE
@@ -96,18 +130,18 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
 {
   override def name() = "AIGoalComposite"
   override def toString() =
+  {
+    var offBase = getDepth()
+    var space = "-"
+    var ret = ""
+    for(g <- subGoals)
     {
-      var offBase = getDepth()
-      var space = "-"
-      var ret = ""
-      for(g <- subGoals)
-        {
-          ret += "\n" + space * offBase + g.toString()
-        }
-      super.toString() + ret
-
-      // super.toString() + subGoals.filter(_.isActive()).map("\n " + _.toString())
+      ret += "\n" + space * offBase + g.toString()
     }
+    super.toString() + ret
+
+    // super.toString() + subGoals.filter(_.isActive()).map("\n " + _.toString())
+  }
 
   type BaseType = AIGoal[TActor]
 
@@ -129,37 +163,37 @@ abstract class AIGoalComposite[TActor](owner:TActor) extends AIGoal(owner)
     subGoals.map(_.terminate())
     subGoals = List()
   }
+  override def getActiveSubGoals():List[BaseType] = subGoals.filter(_.isActive()).flatMap(g => g :: g.getActiveSubGoals())
+
   def tickSubGoals(delta:Float):Int =
+  {
+    // 終了したものを削除
+    val prevLen = subGoals.length
+    for(g <- subGoals)
+      if(g.isNeedsRemove)
+	      removeSubGoal(g)
+
+    // 更新
+    var ret = AIGoal.STATE_ACTIVE
+    if(subGoals.isEmpty == false)
     {
-      // 終了したものを削除
-      val prevLen = subGoals.length
-      for(g <- subGoals)
-        if(g.isNeedsRemove)
-	        removeSubGoal(g)
-      // subGoals = subGoals.filter(_.isNeedsRemove() == false)
-      // subGoals = subGoals.filter(_.isFinished() == false && _.isFailed() == false)
-      
-      // 更新
-      var ret = AIGoal.STATE_ACTIVE
-      if(subGoals.isEmpty == false)
-        {
-          val hd = subGoals.head
-          if(prevLen != subGoals.length)
-	          hd.activate()
+      val hd = subGoals.head
+      if(prevLen != subGoals.length)
+	      hd.activate()
 
-          hd.tick(delta)
-          if(hd.isNeedsRemove() && subGoals.length == 1)
-	          ret = AIGoal.STATE_FINISHED
-          else
-	          ret = AIGoal.STATE_ACTIVE
-        }
-          else
-            {
-              ret = AIGoal.STATE_FINISHED
-            }
-
-      ret
+      hd.tick(delta)
+      if(hd.isNeedsRemove() && subGoals.length == 1)
+	      ret = AIGoal.STATE_FINISHED
+      else
+	      ret = AIGoal.STATE_ACTIVE
     }
+    else
+    {
+      ret = AIGoal.STATE_FINISHED
+    }
+
+    ret
+  }
 };
 /* ------------------------------------------------------------
 !単純ゴールAIの基底クラス

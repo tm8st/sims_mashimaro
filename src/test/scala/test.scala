@@ -7,6 +7,7 @@ import org.scalatest.FunSuite
 import scala.collection.immutable._
 import scala.collection.mutable.Stack
 import scala.collection.mutable.Map
+import scala.io.Source
 
 import org.scalatest.Spec
 import org.scalatest.FlatSpec
@@ -56,6 +57,25 @@ class BenchmarkSuite extends FunSuite with ShouldMatchers
       r.report("localVar", 100) { var t = 0; for(i <- 1 to 100) t += 1 }
       None
    }
+
+    Benchmark.run("For / Filter")
+    { r =>
+      val l = (0 to 1000).toList
+      r.report("fot if", 100)
+      {
+        var sum = 0.f
+        for(i <- l)
+        {
+          if(i % 3 == 0)
+            sum += i + 1.f
+        }
+        // println(sum)
+      }
+      r.report("filter", 100)
+      {
+        var sum = l.foldLeft(0.f){(a, b) => a + IF(b % 3 == 0)(b + 1)(0.f)}
+      }
+    }
   }
 }
 /* ------------------------------------------------------------
@@ -150,5 +170,10 @@ class TestSuite extends FunSuite with ShouldMatchers
     // println(arr.toString)
     // assert(arr.toString equals "Array(0.f, 1.f, 2.f, 3.f)")
     // assert(arr == Array(0, 1, 2, 3))
+  }
+
+  test("""Source""")
+  {
+    // val source = Source.fromPath("test.txt").getLines("\n")
   }
 }
