@@ -17,6 +17,7 @@ object Profiler
   private var isActive = true
   private var isBeginFrame = true
   private var nodeStack:Stack[Node] = new Stack
+
   // 階層表現に使用する文字
   var hierarchySpace = "-"
 

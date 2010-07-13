@@ -9,6 +9,14 @@ import processing.core._
 import scala.math._
 
 /* ------------------------------------------------------------
+   !
+   !@memo
+------------------------------------------------------------ */
+object Name extends Enumeration
+{
+  def NameGame = Value
+}
+/* ------------------------------------------------------------
  !便利関数まとめ
  !@memo 
  ------------------------------------------------------------ */
@@ -89,56 +97,6 @@ class GLFont(val size:Int, val faceName:String)
   val height = size
 
   val handle = GL.g.createFont(faceName, height)
-}
-/* ------------------------------------------------------------
-   !
-   !@memo
------------------------------------------------------------- */
-object Name extends Enumeration
-{
-  def NameGame = Value
-}
-/* ------------------------------------------------------------
- !ログ出力管理
- !@memo 
- ------------------------------------------------------------ */
-object Logger
-{
-  // ログレベル定数
-  val LogError = 3
-  val LogWarning = 2
-  val LogInfo = 1
-  val LogDebug = 0
-  
-  // var currentLevel = LogDebug
-  var currentLevel = LogInfo
-
-  // 各種ログ出力
-  def info(msg: => String)
-  {
-    if(LogInfo >= currentLevel)
-      log("Info", msg)
-  }
-  def debug(msg: => String)
-  {
-    if(LogDebug >= currentLevel)
-      log("Debug", msg)
-  }
-  def warning(msg: => String)
-  {
-    if(LogWarning >= currentLevel)
-      log("Warning", msg)
-  }
-  def error(msg: => String)
-  {
-    if(LogError >= currentLevel)
-      log("Error", msg)
-  }
-
-  private def log(prefix:String, msg:String)
-  {
-    println("<" + prefix + ">" + "[%5.5f".format(Util.getCurrentMSec()/1000.f) + "]" + msg)
-  }
 }
 /* ------------------------------------------------------------
  !色型
