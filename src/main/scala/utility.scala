@@ -7,6 +7,7 @@ import scala.util._
 import scala.collection.mutable.Stack
 import processing.core._
 import scala.math._
+import java.io._
 
 /* ------------------------------------------------------------
    !
@@ -268,5 +269,32 @@ object IF
   def apply(cond:Boolean)(aThen: => Float)(aElse: => Float) =
   {
     if(cond) aThen else aElse
+  }
+}
+/* ------------------------------------------------------------
+   !ファイル操作用クラス
+   !@memo
+------------------------------------------------------------ */
+object ArchiveOutput
+{
+  // def load(path:String){ fos = new FileOutputStream(path) }
+  
+  def save(path:String, content:String)
+  {
+    try
+    {
+      val fos = new FileOutputStream(path)
+      val osw = new OutputStreamWriter(fos, "MS932")
+      val bw = new BufferedWriter(osw)
+
+      bw.write(content)
+      bw.close()
+      osw.close()
+      fos.close()
+    }
+    catch
+    {
+      case e:Exception => e.printStackTrace()
+    }
   }
 }

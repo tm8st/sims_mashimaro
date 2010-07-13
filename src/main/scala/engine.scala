@@ -402,6 +402,9 @@ abstract class MyApplet extends PApplet
       Logger.info("exit")
       
       noLoop()
+
+      Logger.outputFile()
+      
       System.exit(0)
     }
   }
