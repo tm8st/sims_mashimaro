@@ -162,6 +162,10 @@ class TestSuite extends FunSuite with ShouldMatchers
     // cr.recognition(CharacterRecognition.SimplePatterns(1)) should equal (1)
   }
 
+  test("""foldLeft""")
+  {
+    assert(List(1,2,3).foldLeft(0)(_ + _) == 6)
+  }
   test("""Util newArray""")
   {
     def calcValue(i:Int) = i

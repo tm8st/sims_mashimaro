@@ -239,48 +239,42 @@ object SimsGame extends Game
   // 
   override def tick(delta:Float)
   {
-    Profiler.auto("Game Tick", "", Color.Black)
-    {
-      world.tick(delta)
-    }
+    world.tick(delta)
   }
   
   // 
   override def draw()
   {
-    Profiler.auto("Game Draw", "", Color.Black)
+    app.background(232)
+
+    // ゲーム世界
+    world.draw()
+
+    // 状態の重み関数グラフ
     {
-      app.background(232)
+	    app.stroke(0);
+	    app.fill(0)
 
-      // ゲーム世界
-      world.draw()
+	    val params = PersonState.getParamDeclares()
 
-      // 状態の重み関数グラフ
-      {
-	      app.stroke(0);
-	      app.fill(0)
-
-	      val params = PersonState.getParamDeclares()
-
-	      val sx = 700.f
-	      val sy = 80.f
-	      val oy = 60.f
-	      val scale = 0.2f
-	      var y = 0
-	      for(p <- params)
-	        {
-	          app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
-	          app.stroke(192)
-	          GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
-	          GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
-	          
-	          app.stroke(64, 0, 0)
-	          for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
-	            GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
-	          
-	          y += 1
-	        }
-      }
+	    val sx = 700.f
+	    val sy = 80.f
+	    val oy = 60.f
+	    val scale = 0.2f
+	    var y = 0
+	    for(p <- params)
+	      {
+	        app.text(p._1, sx-100 * scale, sy + y * oy-100 * scale)
+	        app.stroke(192)
+	        GL.line(sx + -100 * scale, sy + y * oy, sx + 100 * scale, sy + y * oy)
+	        GL.line(sx + -100 * scale, sy + y * oy - 100*scale, sx + -100 * scale, sy + y * oy + 100*scale)
+	        
+	        app.stroke(64, 0, 0)
+	        for(x <- (-100 to 100).filter(_ % (1/scale).toInt == 0))
+	          GL.point(sx + x * scale, sy + (-p._2(x) * x * scale) + y * oy)
+	        
+	        y += 1
+	      }
     }
 
     // ヘッダ
@@ -320,13 +314,17 @@ object SimsGame extends Game
     debugGUILayout.drawElements()
   }
   //
-  def selectActor(scrX:Int, scrY:Int):GameActor = 
-    {
-      for(p <- world.getPersons)
-        if(p.isContain(scrX, scrY))
-	        return p
-      null
-    }
+  def selectActor(scrX:Int, scrY:Int):SimsActor = 
+  {
+    var ret:SimsActor = null
+    for(p <- world.getPersons)
+      if(p.isContain(scrX, scrY))
+      {
+	      ret = p
+      }
+
+    ret
+  }
 }
 /* ------------------------------------------------------------
  !Sims用アプレット

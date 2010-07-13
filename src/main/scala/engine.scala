@@ -385,8 +385,15 @@ abstract class MyApplet extends PApplet
   {
     Profiler.beginFrame()
 
-    game.tick(1.f/needFrame)
-    game.draw()
+    Profiler.auto("Game Tick", "", Color.Black)
+    {
+      game.tick(1.f/needFrame)
+    }
+
+    Profiler.auto("Game Draw", "", Color.Black)
+    {
+      game.draw()
+    }
 
     Profiler.endFrame()
 

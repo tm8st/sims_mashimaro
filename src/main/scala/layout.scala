@@ -4,6 +4,7 @@
 package tm8st.util.layout
 
 import scala.util._
+import scala.math._
 
 import tm8st.util._
 
@@ -17,7 +18,7 @@ abstract trait LayoutElement
   def sizeY:Float
   def isEnableScaling:Boolean
   def isDrawRect:Boolean
- 
+  
   val originalSizeX = sizeX
   val originalSizeY = sizeY
   var backgroundColor = new Color(0, 32, 64, 32)
@@ -34,7 +35,7 @@ abstract trait LayoutElement
  !@memo
  ------------------------------------------------------------ */
 class LayoutElementString(val strs:List[String], val font:GLFont, bEnableScaling:Boolean)
-  extends LayoutElement
+extends LayoutElement
 {
   val sizeX = Util.getMaxLineLength(strs) * font.width.toFloat + 10.f
   val sizeY = Util.getLineNum(strs) * font.height.toFloat + 10.f
@@ -54,16 +55,16 @@ class LayoutElementString(val strs:List[String], val font:GLFont, bEnableScaling
   }
 }
 /* ------------------------------------------------------------
- !
- !@memo
- ------------------------------------------------------------ */
+!
+!@memo
+------------------------------------------------------------ */
 object GridLayoutManager
 {
 }
 /* ------------------------------------------------------------
- !グリッド方式のレイアウト管理者
- !@memo
- ------------------------------------------------------------ */
+!グリッド方式のレイアウト管理者
+!@memo
+------------------------------------------------------------ */
 class GridLayoutManager(var layoutSizeX:Float, var layoutSizeY:Float, val gridMaxSizeX:Float, val gridMaxSizeY:Float)
 {
   type Elements = List[LayoutElement]
@@ -80,14 +81,14 @@ class GridLayoutManager(var layoutSizeX:Float, var layoutSizeY:Float, val gridMa
   }
   def removeElement(e:LayoutElement)
   {
-    elements -= e
+    elements = elements.filter(_ != e)
   }
 
   // 
   def drawElements()
   {
-    sizeMaxX = Math.max(sizeMaxX, elements.map(_.sizeX).reduceLeft(Math.max(_, _)) + marginX * 2)
-    sizeMaxY = Math.max(sizeMaxY, elements.map(_.sizeY).reduceLeft(Math.max(_, _)) + marginY * 2)
+    sizeMaxX = max(sizeMaxX, elements.map(_.sizeX).reduceLeft(max(_, _)) + marginX * 2)
+    sizeMaxY = max(sizeMaxY, elements.map(_.sizeY).reduceLeft(max(_, _)) + marginY * 2)
 
     val maxX = Math.min(gridMaxSizeX, sizeMaxX)
     val maxY = Math.min(gridMaxSizeY, sizeMaxY)
@@ -95,24 +96,32 @@ class GridLayoutManager(var layoutSizeX:Float, var layoutSizeY:Float, val gridMa
     Logger.debug("Grid elem " + elements.length)
     Logger.debug("Grid max " + maxX + ":" + maxY)
 
-    val xN = Math.max(1, (layoutSizeX / maxX).toInt - 1)
-    val yN = Math.max(1, (layoutSizeY / maxY).toInt - 1)
+    val xN = max(1, (layoutSizeX / maxX).toInt)
+    val yN = max(1, (layoutSizeY / maxY).toInt)
 
     Logger.debug("Grid tile " + xN + ":" + yN)
 
-    var id = 0;
-    for(y <- 0 to yN; x <- 0 to xN)
+    // var id = 0
+    // for(y <- 0 to yN; x <- 0 to xN)
+    // {
+    //   Logger.debug("Grid pos " + x + ":" + y + " id = " + id)
+
+    //   elements(elements.length - id-1).drawLayoutElement(x*(maxX+marginX) + marginX, y*(maxY+marginY) + marginY)
+        
+    //   id += 1
+    //   if(elements.length <= id)
+	  //   {
+	  //     break
+	  //   }
+    // }
+    
+    for(id <- 0 to elements.length-1)
     {
+      val x = id % xN
+      val y = id / xN
       Logger.debug("Grid pos " + x + ":" + y + " id = " + id)
 
       elements(elements.length - id-1).drawLayoutElement(x*(maxX+marginX) + marginX, y*(maxY+marginY) + marginY)
-      
-      id += 1
-      if(elements.length <= id)
-	{
-	  elements = List()
-	  return
-	}
     }
 
     elements = List()

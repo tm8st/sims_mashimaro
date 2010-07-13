@@ -44,7 +44,7 @@ object Util
   def remap(x:Float, min:Float, max:Float):Float = 
     if(max - min != 0.f) (x - min) /  (max - min) else (x - min)
 
-  def getCurrentMSec() = GL.g.millis()
+  def getCurrentMSec() = IF(GL != null)(GL.g.millis())(System.currentTimeMillis())
   def getCurrentNSec() = System.nanoTime()
 
   def getMaxLineLength(strs:List[String]) =
@@ -258,48 +258,48 @@ class Spline(points:Array[(Float, Float)])
   makeTable()
 
   def makeTable() = 
-  {
-    val h = new Array[Float](N)
-    val d = new Array[Float](N)
+    {
+      val h = new Array[Float](N)
+      val d = new Array[Float](N)
 
-    // 両端点での y''(x) / 6 ... (自然スプライン)
-    z(0) = 0; z(N - 1) = 0;
-    for(i <- 0 to N-2)
-      {
-	h(i) =  x(i + 1) - x(i);
-	d(i + 1) = (y(i + 1) - y(i)) / h(i);
-      }
+      // 両端点での y''(x) / 6 ... (自然スプライン)
+      z(0) = 0; z(N - 1) = 0;
+      for(i <- 0 to N-2)
+        {
+	        h(i) =  x(i + 1) - x(i);
+	        d(i + 1) = (y(i + 1) - y(i)) / h(i);
+        }
 
-    z(1) = d(2) - d(1) - h(0) * z(0);
-    d(1) = 2 * (x(2) - x(0));
-    for(i <- 1 to N-3)
-      {
-	val t = h(i) / d(i);
-	z(i + 1) = d(i + 2) - d(i + 1) - z(i) * t;
-	d(i + 1) = 2 * (x(i + 2) - x(i)) - h(i) * t;
-      }
-    z(N - 2) -= h(N - 2) * z(N - 1);
-    for(i <- N-2 to 0)
-      {
-	z(i) = (z(i) - h(i) * z(i + 1)) / d(i);
-      }
-  }
+      z(1) = d(2) - d(1) - h(0) * z(0);
+      d(1) = 2 * (x(2) - x(0));
+      for(i <- 1 to N-3)
+        {
+	        val t = h(i) / d(i);
+	        z(i + 1) = d(i + 2) - d(i + 1) - z(i) * t;
+	        d(i + 1) = 2 * (x(i + 2) - x(i)) - h(i) * t;
+        }
+      z(N - 2) -= h(N - 2) * z(N - 1);
+      for(i <- N-2 to 0)
+        {
+	        z(i) = (z(i) - h(i) * z(i + 1)) / d(i);
+        }
+    }
 
   def map(t:Float):Float =
-  {
-    var i = 0
-    var j = N - 1;
-    while (i < j) {
-      val k = (i + j) / 2;
-      if (x(k) < t) i = k + 1;  else j = k;
+    {
+      var i = 0
+      var j = N - 1
+      while (i < j) {
+        val k = (i + j) / 2;
+        if (x(k) < t) i = k + 1  else j = k
+      }
+      if (i > 0) i -= 1;
+      val h = x(i + 1) - x(i)
+      val d = t - x(i)
+      return (((z(i + 1) - z(i)) * d / h + z(i) * 3) * d
+	            + ((y(i + 1) - y(i)) / h
+	               - (z(i) * 2 + z(i + 1)) * h)) * d + y(i)
     }
-    if (i > 0) i -= 1;
-    val h = x(i + 1) - x(i)
-    val d = t - x(i)
-    return (((z(i + 1) - z(i)) * d / h + z(i) * 3) * d
-	    + ((y(i + 1) - y(i)) / h
-	       - (z(i) * 2 + z(i + 1)) * h)) * d + y(i);
-  }
 }
 /* ------------------------------------------------------------
    !関数のように使えるif テンプレートをちゃんとつかう

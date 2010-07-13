@@ -43,17 +43,17 @@ object PersonState
 
   // 
   def getParamDeclares() = 
-  {
-    List[(String, Float=>Float)](
-      ("お腹", calcHungerWeight),
-      ("便意", calcBladderWeight),
-      ("ボケ", calcBokeWeight),
-      ("ツッコミ", calcTsukkomiWeight),
-      ("人恋しさ", calcSocialWeight),
-      ("体力", calcHpWeight),
-      ("ツッコミ待ち", calcTsukkomiMatiWeight)
-       )
-  }
+    {
+      List[(String, Float=>Float)](
+        ("お腹", calcHungerWeight),
+        ("便意", calcBladderWeight),
+        ("ボケ", calcBokeWeight),
+        ("ツッコミ", calcTsukkomiWeight),
+        ("人恋しさ", calcSocialWeight),
+        ("体力", calcHpWeight),
+        ("ツッコミ待ち", calcTsukkomiMatiWeight)
+      )
+    }
 }
 /* ------------------------------------------------------------
  !人の肉体的、精神的状態
@@ -86,26 +86,26 @@ case class PersonState(aHunger:Float = 0.f, aBladder:Float = 0.f, aBoke:Float = 
 
   //
   def calcMode():Float =
-  {
-    PersonState.calcHungerWeight(hunger) * hunger +
-    PersonState.calcBladderWeight(bladder) * bladder +
-    PersonState.calcBokeWeight(boke) * boke +
-    PersonState.calcTsukkomiWeight(tsukkomi) * tsukkomi +
-    PersonState.calcSocialWeight(social) * social +
-    PersonState.calcHpWeight(hp) * hp +
-    PersonState.calcTsukkomiMatiWeight(tsukkomiMati) * tsukkomiMati
-  }
+    {
+      PersonState.calcHungerWeight(hunger) * hunger +
+      PersonState.calcBladderWeight(bladder) * bladder +
+      PersonState.calcBokeWeight(boke) * boke +
+      PersonState.calcTsukkomiWeight(tsukkomi) * tsukkomi +
+      PersonState.calcSocialWeight(social) * social +
+      PersonState.calcHpWeight(hp) * hp +
+      PersonState.calcTsukkomiMatiWeight(tsukkomiMati) * tsukkomiMati
+    }
   //
   override def toString =
-  {
-    "PersonState:\n hunger " + hunger +
-    "\n bladder " + bladder +
-    "\n boke " + boke +
-    "\n tsukkomi " + tsukkomi +
-    "\n social " + social +
-    "\n hp " + hp + 
-    "\n tsukkomiMati " + tsukkomiMati
-  }
+    {
+      "PersonState:\n hunger " + hunger +
+      "\n bladder " + bladder +
+      "\n boke " + boke +
+      "\n tsukkomi " + tsukkomi +
+      "\n social " + social +
+      "\n hp " + hp + 
+      "\n tsukkomiMati " + tsukkomiMati
+    }
 }
 /* ------------------------------------------------------------
  !人物アクタ
@@ -161,28 +161,28 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
       super.tick(delta)
 
       if(currentAction != null)
-	    {
-	      actionCounter += delta
-	      if(actionCounter > currentAction.time)
-        {
-          Logger.debug(name + " Run Action " + currentAction.name)
+	      {
+	        actionCounter += delta
+	        if(actionCounter > currentAction.time)
+            {
+              Logger.debug(name + " Run Action " + currentAction.name)
 
-          currentAction.Run(this)
+              currentAction.Run(this)
 
-          addMemory(
-            new Memory(world.currentTime, pos, this, currentAction, currentActionTargets, Feedback.Fun, 100.f))
+              addMemory(
+                new Memory(world.currentTime, pos, this, currentAction, currentActionTargets, Feedback.Fun, 100.f))
 
-          Debug
-          {
-            if(currentAction.isSerifAction == false)
-              world.addActor(new ADebugSerif(this, personName + ">" + currentAction.name, pos, world))
-          }
+              Debug
+              {
+                if(currentAction.isSerifAction == false)
+                  world.addActor(new ADebugSerif(this, personName + ">" + currentAction.name, pos, world))
+              }
 
-          actionCounter = 0.f
-          currentAction = null
-          currentActionTargets = List()
-        }
-	    }
+              actionCounter = 0.f
+              currentAction = null
+              currentActionTargets = List()
+            }
+	      }
       
       aiRoot.tick(delta)
       
@@ -203,12 +203,16 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   def isActionEnd() = currentAction == null
   // 
   def isCanAction(actionTarget:ActionTarget, action:Action):Boolean =
-  {
-    if(action.canDo(this) == false) return false
+    {
+      var ret = action.canDo(this)
+      if(ret)
+      {
+        val dif = actionTarget.pos - pos;
+        ret = dif.size < (bounds.radius + actionTarget.bounds.radius)
+      }
 
-    val dif = actionTarget.pos - pos;
-    dif.size < (bounds.radius + actionTarget.bounds.radius)
-  }
+      ret
+    }
   // 
   def isReachable(actionTarget:ActionTarget) = true
   // 
@@ -216,10 +220,10 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   {
     val dif = actionTarget.pos - pos;
     if(dif.size > (bounds.radius + actionTarget.bounds.radius))
-    {
-      pos = pos + dif.normal() * walkSpeed * world.deltaTime
-      bounds = new Bounds(bounds.boxExtent, bounds.radius, pos)
-    }
+      {
+        pos = pos + dif.normal() * walkSpeed * world.deltaTime
+        bounds = new Bounds(bounds.boxExtent, bounds.radius, pos)
+      }
   }
   
   // 
@@ -234,15 +238,15 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
   def say(serifType:SerifType.Value, effectTarget:PersonState, range:Float)
   {
     val ls = serifMap.get(serifType) match {
-    case Some(l) => l
-    case _ => List()
+      case Some(l) => l
+      case _ => List()
     }
 
     if(ls.isEmpty == false)
-    {
-      val index = Util.iRand() % ls.length
-      world.addActor(new ASerif(this, ls(index), serifType, range, effectTarget, pos, world))
-    }
+      {
+        val index = Util.iRand() % ls.length
+        world.addActor(new ASerif(this, ls(index), serifType, range, effectTarget, pos, world))
+      }
   }
   
   //
@@ -252,15 +256,15 @@ class APerson(val personName:String, var pos:Vector3, val world:World,
 
   // 
   override def toString() =
-  {
-    "APerson:" + personName + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
-  }
+    {
+      "APerson:" + personName + "\n" + " Mode " + state.calcMode().toString() + "\n" + state.toString() + "\n" + aiRoot.toString()
+    }
   // 
   def toStringMemory() = name + "\n" + getInfo()
 }
 /* ------------------------------------------------------------
-   !ルートGoalAI
-   !@memo
+ !ルートGoalAI
+!@memo
 ------------------------------------------------------------ */
 class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 {
@@ -283,11 +287,11 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
 
     val ret = tickSubGoals(delta)
     if(ret == AIGoal.STATE_FINISHED || needRethink)
-    {
-      thinkNextAction()
-    }
+      {
+        thinkNextAction()
+      }
 
-  
+    
   }
 
   //! 強制終了可能か
@@ -300,62 +304,69 @@ class PGRoot(aOwner:APerson) extends AIGoalComposite[APerson](aOwner)
   {
     msg match
     {
-    case m:AIGRethinkMessage => { thinkNextAction(); }
-    case _ => super.handleMessage(msg)
+      case m:AIGRethinkMessage => { thinkNextAction(); }
+      case _ => super.handleMessage(msg)
     }
   }
 
   // 
   def thinkNextAction()
   {
-    Logger.debug("thinkNextAction: " + getOwner.name)
-
-    if(subGoals.isEmpty == false)
+    Profiler.auto("thinkNextAction", getOwner.name, Color.Green)
     {
-      val activeSubGoals = getActiveSubGoals()
-      if(activeSubGoals.exists(_.isQuitable == false) == false)
-      {
-        removeSubGoals()
-      }
-      else
-      {
-        needRethink = true
-        return
-      }
-    }
+      Logger.debug("thinkNextAction: " + getOwner.name)
 
-    var maxState = getOwner.state
-    var bestAction:Action = null
-    var bestActionTarget:ActionTarget = null
-    for(at <- getOwner.simsWorld().getActionTargets(); a <- at.actions.filter(_.canDo(getOwner)))
-    {
-      if(getOwner.equals(at) == false)
+      var isThink = true
+      if(subGoals.isEmpty == false)
       {
-	      var newState = getOwner.state.affect(a.effect)
-	      Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
-	      if(newState.calcMode() > maxState.calcMode())
-	      {
-	        maxState = newState
-	        bestAction = a
-	        bestActionTarget = at
-	      }
+        val activeSubGoals = getActiveSubGoals()
+        if(activeSubGoals.exists(_.isQuitable == false) == false)
+        {
+          removeSubGoals()
+        }
+        else
+        {
+          isThink = false
+          needRethink = true
+        }
       }
-    }
 
-    if(bestAction != null)
-    {
-      addSubGoal(new PGAction(getOwner, bestAction, bestActionTarget))
-      subGoals.head.activate()
-      needRethink = false
+      if(isThink)
+      {
+        var maxState = getOwner.state
+        var bestAction:Action = null
+        var bestActionTarget:ActionTarget = null
+        for(at <- getOwner.simsWorld().getActionTargets(); a <- at.actions.filter(_.canDo(getOwner)))
+          {
+            if(getOwner.equals(at) == false)
+              {
+	              var newState = getOwner.state.affect(a.effect)
+	              Logger.debug("mode: new " + newState.calcMode() +", max " + maxState.calcMode() + " if " + (newState.calcMode() > maxState.calcMode()).toString)
+	              if(newState.calcMode() > maxState.calcMode())
+	                {
+	                  maxState = newState
+	                  bestAction = a
+	                  bestActionTarget = at
+	                }
+              }
+          }
 
-      Logger.debug("Set Action: " + getOwner.name + " " + bestAction.name)
+        if(bestAction != null)
+          {
+            addSubGoal(new PGAction(getOwner, bestAction, bestActionTarget))
+            subGoals.head.activate()
+            needRethink = false
+
+            Logger.debug("Set Action: " + getOwner.name + " " + bestAction.name)
+          }
+      }
     }
   }
 }
 /* ------------------------------------------------------------
-   !アクションGoal
-   !@memo
------------------------------------------------------------- */
+ !アクションGoal
+ !@memo
+ ------------------------------------------------------------ */
 class PGAction(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalComposite[APerson](aOwner)
 {
   override def name() = "PGAction("+action.name+" target "+actionTarget.name+")"
@@ -367,12 +378,12 @@ class PGAction(aOwner:APerson, val action:Action, val actionTarget:ActionTarget)
     super.activate()
 
     if(isActive() == false)
-    {
-      addSubGoal(new PGActionRun(getOwner, action, actionTarget))
-      addSubGoal(new PGActionMoveTarget(getOwner, action, actionTarget))
-      subGoals.head.activate()
-      setActive()
-    }
+      {
+        addSubGoal(new PGActionRun(getOwner, action, actionTarget))
+        addSubGoal(new PGActionMoveTarget(getOwner, action, actionTarget))
+        subGoals.head.activate()
+        setActive()
+      }
   }
 
   // 
@@ -382,14 +393,14 @@ class PGAction(aOwner:APerson, val action:Action, val actionTarget:ActionTarget)
 
     val ret = tickSubGoals(delta)
     if(ret == AIGoal.STATE_FINISHED)
-    {
-      setFinished()
-    }
+      {
+        setFinished()
+      }
   }
 }
 /* ------------------------------------------------------------
-   !ターゲットへの移動Goal
-   !@memo
+!ターゲットへの移動Goal
+!@memo
 ------------------------------------------------------------ */
 class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalAtomic[APerson](aOwner)
 {
@@ -404,13 +415,13 @@ class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:Act
 
     checkIntervalCounter = 0.f
     if(getOwner.isReachable(actionTarget))
-    {
-      setActive()
-    }
+      {
+        setActive()
+      }
     else
-    {
-      setFailed()
-    }
+      {
+        setFailed()
+      }
   }
 
   // 
@@ -422,25 +433,25 @@ class PGActionMoveTarget(aOwner:APerson, val action:Action, val actionTarget:Act
 
     getOwner.moveToTarget(actionTarget)
     if(getOwner.isCanAction(actionTarget, action))
-    {
-      setFinished()
-    }
+      {
+        setFinished()
+      }
     else
-    {
-      if(checkIntervalCounter > 1.f)
-	      {
-	        checkIntervalCounter = 0.f
-	        if(getOwner.isReachable(actionTarget) == false)
-	          {
-	            setFailed()
-	          }
-	      }
-    }
+      {
+        if(checkIntervalCounter > 1.f)
+	        {
+	          checkIntervalCounter = 0.f
+	          if(getOwner.isReachable(actionTarget) == false)
+	            {
+	              setFailed()
+	            }
+	        }
+      }
   }
 }
 /* ------------------------------------------------------------
-   !アクション実行Goal
-   !@memo
+!アクション実行Goal
+!@memo
 ------------------------------------------------------------ */
 class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarget) extends AIGoalAtomic[APerson](aOwner)
 {
@@ -461,14 +472,14 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
     checkIntervalCounter = 0.f
 
     if(getOwner.isCanAction(actionTarget, action))
-    {
-      getOwner.startAction(actionTarget, action)
-      setActive()
-    }
+      {
+        getOwner.startAction(actionTarget, action)
+        setActive()
+      }
     else
-    {
-      setFailed()
-    }
+      {
+        setFailed()
+      }
   }
 
   // 
@@ -479,8 +490,8 @@ class PGActionRun(aOwner:APerson, val action:Action, val actionTarget:ActionTarg
     checkIntervalCounter += delta
 
     if(getOwner.isActionEnd())
-    {
-      setFinished()
-    }
+      {
+        setFinished()
+      }
   }
 }
