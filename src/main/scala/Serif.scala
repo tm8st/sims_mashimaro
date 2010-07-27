@@ -6,14 +6,17 @@ package tm8st.sims
 import tm8st.engine._
 import tm8st.util._
 import tm8st.sims._
-
+  
 /* ------------------------------------------------------------
  !台詞タイプEnum
  !@memo
  ------------------------------------------------------------ */
 object SerifType extends Enumeration
 {
-  val OgoeBoke, OgoeTsukkomi, Nichijo, Empty = Value
+  val OgoeBoke,
+    OgoeTsukkomi,
+    Nichijo,
+    Empty = Value
 }
 /* ------------------------------------------------------------
  !デバッグ台詞アクタ

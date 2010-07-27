@@ -278,7 +278,7 @@ object IF
 object ArchiveOutput
 {
   // def load(path:String){ fos = new FileOutputStream(path) }
-  
+
   def save(path:String, content:String)
   {
     try

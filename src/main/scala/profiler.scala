@@ -27,9 +27,11 @@ object Profiler
   // 区間毎の時間計測用クラス
   case class Node(val symbol:String, val caption:String, val color:Color)
   {
-    var time = Util.getCurrentNSec()
+    var beginTime = Util.getCurrentNSec()
+    var endTime:Float = -1.f
     var childs:List[Node] = List()
 
+    def time = endTime - beginTime
     def addChild(c:Node){ childs = c :: childs }
   }
 
@@ -44,13 +46,6 @@ object Profiler
   // フレーム計測終了通知
   def endFrame()
   {
-    // 仕様になった。
-    // Debug
-    // {
-    //   if(nodeStack.length != 1)
-    //     Logger.warning("Profiler: invalid nodeStack depth.")
-    // }      
-
     if(isBeginFrame)
     {
       // 計測時間の確定
@@ -58,7 +53,7 @@ object Profiler
       {
         popNode()
       }
-      nodeStack.top.time = Util.getCurrentNSec() - nodeStack.top.time
+      nodeStack.top.endTime = Util.getCurrentNSec()
 
       isBeginFrame = false
     }
@@ -133,7 +128,7 @@ object Profiler
         Logger.debug("Profilter: popChild " + " "+nodeStack.top.symbol + " depth " + nodeStack.length)
     }      
 
-    nodeStack.top.time = Util.getCurrentNSec() - nodeStack.top.time
+    nodeStack.top.endTime = Util.getCurrentNSec()
     nodeStack.pop()
   }
 }
